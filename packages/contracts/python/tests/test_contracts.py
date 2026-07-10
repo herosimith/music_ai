@@ -11,6 +11,7 @@ from music_ai_contracts.models import (
     CONTRACT_MODELS,
     CoachActionV1,
     PhraseAudioV1,
+    ReferenceF0V1,
     ScoreV1,
     SongManifestV1,
     TransportSyncV1,
@@ -170,6 +171,23 @@ def test_feature_frames_must_be_contiguous() -> None:
     data["frames"][1]["sample_index"] += data["hop_samples"]
     with pytest.raises(ValidationError, match="contiguous by hop_samples"):
         UserFeaturesV1.model_validate(data)
+
+
+def test_reference_f0_frames_must_be_voicing_consistent_and_contiguous() -> None:
+    data = _example("reference-f0.v1")
+    data["frames"][0]["voiced"] = False
+    with pytest.raises(ValidationError, match="unvoiced reference frames"):
+        ReferenceF0V1.model_validate(data)
+
+    data = _example("reference-f0.v1")
+    data["frames"][1]["sample_index"] += data["hop_samples"]
+    with pytest.raises(ValidationError, match="contiguous by hop_samples"):
+        ReferenceF0V1.model_validate(data)
+
+    data = _example("reference-f0.v1")
+    data["candidates"].append({"start_sample": 900000, "end_sample": 950000, "ornament": False})
+    with pytest.raises(ValidationError, match="must not overlap"):
+        ReferenceF0V1.model_validate(data)
 
 
 def test_coach_action_arguments_match_discriminator() -> None:

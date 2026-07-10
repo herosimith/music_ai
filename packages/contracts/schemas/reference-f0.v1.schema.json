@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "ReferenceF0Frame": {
+      "additionalProperties": false,
+      "properties": {
+        "f0_confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "F0 Confidence",
+          "type": "number"
+        },
+        "f0_hz": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 20000.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "F0 Hz"
+        },
+        "monophonic_confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Monophonic Confidence",
+          "type": "number"
+        },
+        "sample_index": {
+          "minimum": 0,
+          "title": "Sample Index",
+          "type": "integer"
+        },
+        "voiced": {
+          "title": "Voiced",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sample_index",
+        "voiced",
+        "f0_confidence",
+        "monophonic_confidence"
+      ],
+      "title": "ReferenceF0Frame",
+      "type": "object"
+    },
+    "ReferenceRegionCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "end_sample": {
+          "exclusiveMinimum": 0,
+          "title": "End Sample",
+          "type": "integer"
+        },
+        "ornament": {
+          "default": false,
+          "title": "Ornament",
+          "type": "boolean"
+        },
+        "start_sample": {
+          "minimum": 0,
+          "title": "Start Sample",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start_sample",
+        "end_sample"
+      ],
+      "title": "ReferenceRegionCandidate",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "accompaniment_leakage": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Accompaniment Leakage",
+      "type": "number"
+    },
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/ReferenceRegionCandidate"
+      },
+      "maxItems": 100000,
+      "title": "Candidates",
+      "type": "array"
+    },
+    "duration_samples": {
+      "exclusiveMinimum": 0,
+      "title": "Duration Samples",
+      "type": "integer"
+    },
+    "frames": {
+      "items": {
+        "$ref": "#/$defs/ReferenceF0Frame"
+      },
+      "maxItems": 1000000,
+      "title": "Frames",
+      "type": "array"
+    },
+    "hop_samples": {
+      "exclusiveMinimum": 0,
+      "maximum": 16384,
+      "title": "Hop Samples",
+      "type": "integer"
+    },
+    "model_release": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Model Release",
+      "type": "string"
+    },
+    "pipeline_version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Pipeline Version",
+      "type": "string"
+    },
+    "produced_at": {
+      "format": "date-time",
+      "title": "Produced At",
+      "type": "string"
+    },
+    "sample_rate": {
+      "maximum": 192000,
+      "minimum": 8000,
+      "title": "Sample Rate",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "reference-f0.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "separation_confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Separation Confidence",
+      "type": "number"
+    },
+    "song_id": {
+      "format": "uuid",
+      "title": "Song Id",
+      "type": "string"
+    },
+    "source_vocal_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Source Vocal Sha256",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "vocal_presence_coverage": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Vocal Presence Coverage",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "song_id",
+    "sample_rate",
+    "duration_samples",
+    "hop_samples",
+    "source_vocal_sha256",
+    "pipeline_version",
+    "model_release",
+    "vocal_presence_coverage",
+    "separation_confidence",
+    "accompaniment_leakage",
+    "produced_at"
+  ],
+  "title": "ReferenceF0V1",
+  "type": "object"
+}

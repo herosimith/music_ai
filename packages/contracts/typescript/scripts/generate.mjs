@@ -11,6 +11,7 @@ const topLevelTypes = {
   "coach-action-v1": "CoachActionV1",
   "correction-event-v1": "CorrectionEventV1",
   "phrase-audio-v1": "PhraseAudioV1",
+  "reference-f0-v1": "ReferenceF0V1",
   "score-v1": "ScoreV1",
   "song-manifest-v1": "SongManifestV1",
   "transport-v1": "TransportSyncV1",

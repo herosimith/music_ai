@@ -18,6 +18,7 @@ members = [
     "packages/contracts/python",
     "packages/scoring-core",
     "services/control-plane",
+    "services/ingest-worker",
 ]
 
 [tool.pytest.ini_options]

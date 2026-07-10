@@ -194,6 +194,73 @@ class SongManifestV1(ContractModel):
         return self
 
 
+class ReferenceF0Frame(ContractModel):
+    sample_index: Annotated[int, Field(ge=0)]
+    voiced: bool
+    f0_hz: PositiveHertz | None = None
+    f0_confidence: UnitInterval
+    monophonic_confidence: UnitInterval
+
+    @model_validator(mode="after")
+    def validate_voicing(self) -> ReferenceF0Frame:
+        if self.voiced and self.f0_hz is None:
+            raise ValueError("voiced reference frames require f0_hz")
+        if not self.voiced and self.f0_hz is not None:
+            raise ValueError("unvoiced reference frames cannot contain f0_hz")
+        return self
+
+
+class ReferenceRegionCandidate(ContractModel):
+    start_sample: Annotated[int, Field(ge=0)]
+    end_sample: Annotated[int, Field(gt=0)]
+    ornament: bool = False
+
+    @model_validator(mode="after")
+    def validate_range(self) -> ReferenceRegionCandidate:
+        if self.end_sample <= self.start_sample:
+            raise ValueError("candidate end_sample must be greater than start_sample")
+        return self
+
+
+class ReferenceF0V1(ContractModel):
+    schema_version: Literal["reference-f0.v1"]
+    tenant_id: UUID
+    song_id: UUID
+    sample_rate: Annotated[int, Field(ge=8_000, le=192_000)]
+    duration_samples: Annotated[int, Field(gt=0)]
+    hop_samples: Annotated[int, Field(gt=0, le=16_384)]
+    source_vocal_sha256: Sha256
+    pipeline_version: VersionName
+    model_release: VersionName
+    vocal_presence_coverage: UnitInterval
+    separation_confidence: UnitInterval
+    accompaniment_leakage: UnitInterval
+    frames: list[ReferenceF0Frame] = Field(default_factory=list, max_length=1_000_000)
+    candidates: list[ReferenceRegionCandidate] = Field(default_factory=list, max_length=100_000)
+    produced_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def validate_frame_timeline(self) -> ReferenceF0V1:
+        indices = [frame.sample_index for frame in self.frames]
+        if indices != sorted(set(indices)):
+            raise ValueError("reference frame sample_index values must be strictly increasing")
+        if any(current - previous != self.hop_samples for previous, current in pairwise(indices)):
+            raise ValueError(
+                "reference frame sample_index values must be contiguous by hop_samples"
+            )
+        if indices and indices[-1] >= self.duration_samples:
+            raise ValueError("reference frames must stay within the song duration")
+        starts = [candidate.start_sample for candidate in self.candidates]
+        if starts != sorted(starts):
+            raise ValueError("reference candidates must be sorted by start_sample")
+        for previous, current in pairwise(self.candidates):
+            if current.start_sample < previous.end_sample:
+                raise ValueError("reference candidates must not overlap")
+        if any(candidate.end_sample > self.duration_samples for candidate in self.candidates):
+            raise ValueError("reference candidates must stay within the song duration")
+        return self
+
+
 class UserFeatureFrame(ContractModel):
     sample_index: Annotated[
         int,
@@ -413,6 +480,7 @@ CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "transport.v1": TransportSyncV1,
     "phrase-audio.v1": PhraseAudioV1,
     "song-manifest.v1": SongManifestV1,
+    "reference-f0.v1": ReferenceF0V1,
     "user-features.v1": UserFeaturesV1,
     "correction-event.v1": CorrectionEventV1,
     "score.v1": ScoreV1,

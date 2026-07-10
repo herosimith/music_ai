@@ -6,6 +6,7 @@ requires-python = "==3.12.*"
 members = [
     "music-ai-contracts",
     "music-ai-control-plane",
+    "music-ai-ingest",
     "music-ai-scoring",
     "music-ai-workspace",
 ]
@@ -265,6 +266,23 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.10,<3" },
     { name = "sqlalchemy", specifier = ">=2.0.41,<3" },
     { name = "uvicorn", specifier = ">=0.35,<1" },
+]
+
+[[package]]
+name = "music-ai-ingest"
+version = "0.1.0"
+source = { editable = "services/ingest-worker" }
+dependencies = [
+    { name = "httpx2" },
+    { name = "music-ai-contracts" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx2", specifier = ">=2.5,<3" },
+    { name = "music-ai-contracts", editable = "packages/contracts/python" },
+    { name = "pydantic", specifier = ">=2.12,<3" },
 ]
 
 [[package]]
