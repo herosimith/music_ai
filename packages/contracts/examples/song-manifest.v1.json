@@ -1,0 +1,58 @@
+{
+  "schema_version": "song-manifest.v1",
+  "tenant_id": "11111111-1111-4111-8111-111111111111",
+  "song_id": "44444444-4444-4444-8444-444444444444",
+  "reference_source": "extracted_recording",
+  "rights_basis": "User attested private practice rights",
+  "source_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "sample_rate": 48000,
+  "duration_samples": 11520000,
+  "gate_status": "accepted",
+  "scorable_vocal_coverage": 0.72,
+  "quality_issues": [
+    {
+      "code": "reference.extracted",
+      "severity": "info",
+      "message_key": "quality.reference.extracted",
+      "evidence": []
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "tenant/111/song/444/source",
+      "kind": "source",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "model_release": null
+    },
+    {
+      "artifact_id": "tenant/111/song/444/vocal",
+      "kind": "vocal",
+      "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "model_release": "separator-research.v1"
+    },
+    {
+      "artifact_id": "tenant/111/song/444/f0",
+      "kind": "f0",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "model_release": "f0-research.v1"
+    }
+  ],
+  "scorable_regions": [
+    {
+      "region_id": "phrase-01-note-01",
+      "start_sample": 864000,
+      "end_sample": 912000,
+      "target_f0_hz": 261.63,
+      "reference_confidence": 0.96,
+      "monophonic_confidence": 0.93,
+      "ornament": false
+    }
+  ],
+  "versions": {
+    "pipeline_version": "pipeline.v1",
+    "model_release": "reference-research.v1",
+    "score_version": "score.v1",
+    "calibration_version": "calibration.v1"
+  },
+  "produced_at": "2026-07-11T04:00:02Z"
+}

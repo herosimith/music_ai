@@ -1,0 +1,7 @@
+export type { CoachActionV1 } from "./coach-action-v1.js";
+export type { CorrectionEventV1 } from "./correction-event-v1.js";
+export type { PhraseAudioV1 } from "./phrase-audio-v1.js";
+export type { ScoreV1 } from "./score-v1.js";
+export type { SongManifestV1 } from "./song-manifest-v1.js";
+export type { TransportSyncV1 } from "./transport-v1.js";
+export type { UserFeaturesV1 } from "./user-features-v1.js";

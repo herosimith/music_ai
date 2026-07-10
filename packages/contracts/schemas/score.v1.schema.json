@@ -1,0 +1,344 @@
+{
+  "$defs": {
+    "CorrectionEventV1": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "correction_id": {
+          "format": "uuid",
+          "title": "Correction Id",
+          "type": "string"
+        },
+        "correction_type": {
+          "$ref": "#/$defs/CorrectionType"
+        },
+        "end_sample": {
+          "exclusiveMinimum": 0,
+          "title": "End Sample",
+          "type": "integer"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidencePointer"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "observed": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NumericMetric"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "phrase_id": {
+          "format": "uuid",
+          "title": "Phrase Id",
+          "type": "string"
+        },
+        "produced_at": {
+          "format": "date-time",
+          "title": "Produced At",
+          "type": "string"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NumericMetric"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "reference_confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Reference Confidence",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": "correction-event.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "severity": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Severity",
+          "type": "number"
+        },
+        "start_sample": {
+          "minimum": 0,
+          "title": "Start Sample",
+          "type": "integer"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "session_id",
+        "phrase_id",
+        "correction_id",
+        "correction_type",
+        "start_sample",
+        "end_sample",
+        "severity",
+        "confidence",
+        "reference_confidence",
+        "evidence",
+        "score_version",
+        "produced_at"
+      ],
+      "title": "CorrectionEventV1",
+      "type": "object"
+    },
+    "CorrectionType": {
+      "enum": [
+        "sharp",
+        "flat",
+        "octave_error",
+        "early",
+        "late",
+        "short",
+        "long",
+        "missed",
+        "unstable"
+      ],
+      "title": "CorrectionType",
+      "type": "string"
+    },
+    "EvidencePointer": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "end_sample": {
+          "exclusiveMinimum": 0,
+          "title": "End Sample",
+          "type": "integer"
+        },
+        "start_sample": {
+          "minimum": 0,
+          "title": "Start Sample",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "start_sample",
+        "end_sample"
+      ],
+      "title": "EvidencePointer",
+      "type": "object"
+    },
+    "NumericMetric": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "coverage": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Coverage",
+          "type": "number"
+        },
+        "unit": {
+          "enum": [
+            "cents",
+            "milliseconds",
+            "ratio",
+            "hertz",
+            "semitones"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit",
+        "confidence",
+        "coverage"
+      ],
+      "title": "NumericMetric",
+      "type": "object"
+    },
+    "ReferenceSource": {
+      "enum": [
+        "canonical_notes",
+        "independent_stems",
+        "extracted_recording"
+      ],
+      "title": "ReferenceSource",
+      "type": "string"
+    },
+    "VersionStamp": {
+      "additionalProperties": false,
+      "properties": {
+        "calibration_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Calibration Version",
+          "type": "string"
+        },
+        "model_release": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model Release",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pipeline_version",
+        "model_release",
+        "score_version",
+        "calibration_version"
+      ],
+      "title": "VersionStamp",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "abstained_reason": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "pattern": "^[a-z0-9_.-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Abstained Reason"
+    },
+    "corrections": {
+      "items": {
+        "$ref": "#/$defs/CorrectionEventV1"
+      },
+      "maxItems": 10000,
+      "title": "Corrections",
+      "type": "array"
+    },
+    "metrics": {
+      "maxProperties": 100,
+      "patternProperties": {
+        "^[a-z][a-z0-9_.-]{1,63}$": {
+          "$ref": "#/$defs/NumericMetric"
+        }
+      },
+      "title": "Metrics",
+      "type": "object"
+    },
+    "phrase_id": {
+      "format": "uuid",
+      "title": "Phrase Id",
+      "type": "string"
+    },
+    "produced_at": {
+      "format": "date-time",
+      "title": "Produced At",
+      "type": "string"
+    },
+    "reference_source": {
+      "$ref": "#/$defs/ReferenceSource"
+    },
+    "schema_version": {
+      "const": "score.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scored_coverage": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Scored Coverage",
+      "type": "number"
+    },
+    "session_id": {
+      "format": "uuid",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "song_id": {
+      "format": "uuid",
+      "title": "Song Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "versions": {
+      "$ref": "#/$defs/VersionStamp"
+    }
+  },
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "session_id",
+    "phrase_id",
+    "song_id",
+    "reference_source",
+    "scored_coverage",
+    "versions",
+    "produced_at"
+  ],
+  "title": "ScoreV1",
+  "type": "object"
+}

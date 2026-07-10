@@ -1,0 +1,656 @@
+{
+  "$defs": {
+    "CompareTakeArguments": {
+      "additionalProperties": false,
+      "properties": {
+        "take_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Take Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "take_ids"
+      ],
+      "title": "CompareTakeArguments",
+      "type": "object"
+    },
+    "CompareTakeCoachAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action_id": {
+          "format": "uuid",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "action_type": {
+          "const": "compare_take",
+          "title": "Action Type",
+          "type": "string"
+        },
+        "arguments": {
+          "$ref": "#/$defs/CompareTakeArguments"
+        },
+        "message": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "phrase_id": {
+          "format": "uuid",
+          "title": "Phrase Id",
+          "type": "string"
+        },
+        "produced_at": {
+          "format": "date-time",
+          "title": "Produced At",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "coach-action.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "source_correction_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Source Correction Ids",
+          "type": "array"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "action_id",
+        "session_id",
+        "phrase_id",
+        "message",
+        "provider",
+        "score_version",
+        "produced_at",
+        "action_type",
+        "arguments"
+      ],
+      "title": "CompareTakeCoachAction",
+      "type": "object"
+    },
+    "LoopArguments": {
+      "additionalProperties": false,
+      "properties": {
+        "end_sample": {
+          "exclusiveMinimum": 0,
+          "title": "End Sample",
+          "type": "integer"
+        },
+        "repetitions": {
+          "default": 3,
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Repetitions",
+          "type": "integer"
+        },
+        "start_sample": {
+          "minimum": 0,
+          "title": "Start Sample",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start_sample",
+        "end_sample"
+      ],
+      "title": "LoopArguments",
+      "type": "object"
+    },
+    "LoopCoachAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action_id": {
+          "format": "uuid",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "action_type": {
+          "const": "loop",
+          "title": "Action Type",
+          "type": "string"
+        },
+        "arguments": {
+          "$ref": "#/$defs/LoopArguments"
+        },
+        "message": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "phrase_id": {
+          "format": "uuid",
+          "title": "Phrase Id",
+          "type": "string"
+        },
+        "produced_at": {
+          "format": "date-time",
+          "title": "Produced At",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "coach-action.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "source_correction_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Source Correction Ids",
+          "type": "array"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "action_id",
+        "session_id",
+        "phrase_id",
+        "message",
+        "provider",
+        "score_version",
+        "produced_at",
+        "action_type",
+        "arguments"
+      ],
+      "title": "LoopCoachAction",
+      "type": "object"
+    },
+    "ReferenceToneArguments": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_ms": {
+          "maximum": 5000,
+          "minimum": 100,
+          "title": "Duration Ms",
+          "type": "integer"
+        },
+        "f0_hz": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 20000.0,
+          "title": "F0 Hz",
+          "type": "number"
+        }
+      },
+      "required": [
+        "f0_hz",
+        "duration_ms"
+      ],
+      "title": "ReferenceToneArguments",
+      "type": "object"
+    },
+    "ReferenceToneCoachAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action_id": {
+          "format": "uuid",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "action_type": {
+          "const": "reference_tone",
+          "title": "Action Type",
+          "type": "string"
+        },
+        "arguments": {
+          "$ref": "#/$defs/ReferenceToneArguments"
+        },
+        "message": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "phrase_id": {
+          "format": "uuid",
+          "title": "Phrase Id",
+          "type": "string"
+        },
+        "produced_at": {
+          "format": "date-time",
+          "title": "Produced At",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "coach-action.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "source_correction_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Source Correction Ids",
+          "type": "array"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "action_id",
+        "session_id",
+        "phrase_id",
+        "message",
+        "provider",
+        "score_version",
+        "produced_at",
+        "action_type",
+        "arguments"
+      ],
+      "title": "ReferenceToneCoachAction",
+      "type": "object"
+    },
+    "SlowArguments": {
+      "additionalProperties": false,
+      "properties": {
+        "end_sample": {
+          "exclusiveMinimum": 0,
+          "title": "End Sample",
+          "type": "integer"
+        },
+        "speed": {
+          "maximum": 1.0,
+          "minimum": 0.5,
+          "title": "Speed",
+          "type": "number"
+        },
+        "start_sample": {
+          "minimum": 0,
+          "title": "Start Sample",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start_sample",
+        "end_sample",
+        "speed"
+      ],
+      "title": "SlowArguments",
+      "type": "object"
+    },
+    "SlowCoachAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action_id": {
+          "format": "uuid",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "action_type": {
+          "const": "slow",
+          "title": "Action Type",
+          "type": "string"
+        },
+        "arguments": {
+          "$ref": "#/$defs/SlowArguments"
+        },
+        "message": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "phrase_id": {
+          "format": "uuid",
+          "title": "Phrase Id",
+          "type": "string"
+        },
+        "produced_at": {
+          "format": "date-time",
+          "title": "Produced At",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "coach-action.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "source_correction_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Source Correction Ids",
+          "type": "array"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "action_id",
+        "session_id",
+        "phrase_id",
+        "message",
+        "provider",
+        "score_version",
+        "produced_at",
+        "action_type",
+        "arguments"
+      ],
+      "title": "SlowCoachAction",
+      "type": "object"
+    },
+    "TextArguments": {
+      "additionalProperties": false,
+      "properties": {},
+      "title": "TextArguments",
+      "type": "object"
+    },
+    "TextCoachAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action_id": {
+          "format": "uuid",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "action_type": {
+          "const": "text",
+          "title": "Action Type",
+          "type": "string"
+        },
+        "arguments": {
+          "$ref": "#/$defs/TextArguments"
+        },
+        "message": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "phrase_id": {
+          "format": "uuid",
+          "title": "Phrase Id",
+          "type": "string"
+        },
+        "produced_at": {
+          "format": "date-time",
+          "title": "Produced At",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "coach-action.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "source_correction_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Source Correction Ids",
+          "type": "array"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "action_id",
+        "session_id",
+        "phrase_id",
+        "message",
+        "provider",
+        "score_version",
+        "produced_at",
+        "action_type",
+        "arguments"
+      ],
+      "title": "TextCoachAction",
+      "type": "object"
+    },
+    "TransposeArguments": {
+      "additionalProperties": false,
+      "properties": {
+        "semitones": {
+          "maximum": 12,
+          "minimum": -12,
+          "title": "Semitones",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "semitones"
+      ],
+      "title": "TransposeArguments",
+      "type": "object"
+    },
+    "TransposeCoachAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action_id": {
+          "format": "uuid",
+          "title": "Action Id",
+          "type": "string"
+        },
+        "action_type": {
+          "const": "transpose",
+          "title": "Action Type",
+          "type": "string"
+        },
+        "arguments": {
+          "$ref": "#/$defs/TransposeArguments"
+        },
+        "message": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "phrase_id": {
+          "format": "uuid",
+          "title": "Phrase Id",
+          "type": "string"
+        },
+        "produced_at": {
+          "format": "date-time",
+          "title": "Produced At",
+          "type": "string"
+        },
+        "provider": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "coach-action.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "source_correction_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Source Correction Ids",
+          "type": "array"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant_id",
+        "action_id",
+        "session_id",
+        "phrase_id",
+        "message",
+        "provider",
+        "score_version",
+        "produced_at",
+        "action_type",
+        "arguments"
+      ],
+      "title": "TransposeCoachAction",
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/LoopCoachAction"
+    },
+    {
+      "$ref": "#/$defs/SlowCoachAction"
+    },
+    {
+      "$ref": "#/$defs/TransposeCoachAction"
+    },
+    {
+      "$ref": "#/$defs/ReferenceToneCoachAction"
+    },
+    {
+      "$ref": "#/$defs/CompareTakeCoachAction"
+    },
+    {
+      "$ref": "#/$defs/TextCoachAction"
+    }
+  ],
+  "title": "CoachActionV1"
+}

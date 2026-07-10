@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --all-packages --frozen
+      - run: uv run ruff check .
+      - run: uv run --package music-ai-contracts python -m music_ai_contracts.schema --check packages/contracts/schemas
+      - run: uv run --package music-ai-contracts python -m music_ai_contracts.registry --check models/registry/registry.schema.json
+      - run: uv run --package music-ai-contracts pytest packages/contracts/python/tests
+
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.2
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm contracts:generate
+      - run: git diff --exit-code
+      - run: pnpm test
+      - run: pnpm build

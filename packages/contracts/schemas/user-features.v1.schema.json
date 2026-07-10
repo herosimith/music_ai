@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "UserFeatureFrame": {
+      "additionalProperties": false,
+      "properties": {
+        "energy_dbfs": {
+          "maximum": 12.0,
+          "minimum": -160.0,
+          "title": "Energy Dbfs",
+          "type": "number"
+        },
+        "f0_confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "F0 Confidence",
+          "type": "number"
+        },
+        "f0_hz": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 20000.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "F0 Hz"
+        },
+        "leakage_confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Leakage Confidence",
+          "type": "number"
+        },
+        "sample_index": {
+          "minimum": 0,
+          "title": "Sample Index",
+          "type": "integer"
+        },
+        "voiced": {
+          "title": "Voiced",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sample_index",
+        "voiced",
+        "f0_confidence",
+        "energy_dbfs",
+        "leakage_confidence"
+      ],
+      "title": "UserFeatureFrame",
+      "type": "object"
+    },
+    "VersionStamp": {
+      "additionalProperties": false,
+      "properties": {
+        "calibration_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Calibration Version",
+          "type": "string"
+        },
+        "model_release": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model Release",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pipeline_version",
+        "model_release",
+        "score_version",
+        "calibration_version"
+      ],
+      "title": "VersionStamp",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "frames": {
+      "items": {
+        "$ref": "#/$defs/UserFeatureFrame"
+      },
+      "maxItems": 1000000,
+      "minItems": 1,
+      "title": "Frames",
+      "type": "array"
+    },
+    "hop_samples": {
+      "exclusiveMinimum": 0,
+      "maximum": 16384,
+      "title": "Hop Samples",
+      "type": "integer"
+    },
+    "phrase_id": {
+      "format": "uuid",
+      "title": "Phrase Id",
+      "type": "string"
+    },
+    "produced_at": {
+      "format": "date-time",
+      "title": "Produced At",
+      "type": "string"
+    },
+    "sample_rate": {
+      "maximum": 192000,
+      "minimum": 8000,
+      "title": "Sample Rate",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "user-features.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session_id": {
+      "format": "uuid",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "source_audio_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Source Audio Sha256",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "versions": {
+      "$ref": "#/$defs/VersionStamp"
+    }
+  },
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "session_id",
+    "phrase_id",
+    "sample_rate",
+    "hop_samples",
+    "source_audio_sha256",
+    "frames",
+    "versions",
+    "produced_at"
+  ],
+  "title": "UserFeaturesV1",
+  "type": "object"
+}

@@ -1,0 +1,71 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "captured_at": {
+      "format": "date-time",
+      "title": "Captured At",
+      "type": "string"
+    },
+    "drift_ppm": {
+      "maximum": 2000,
+      "minimum": -2000,
+      "title": "Drift Ppm",
+      "type": "number"
+    },
+    "microphone_sample_index": {
+      "minimum": 0,
+      "title": "Microphone Sample Index",
+      "type": "integer"
+    },
+    "playhead_samples": {
+      "minimum": 0,
+      "title": "Playhead Samples",
+      "type": "integer"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "sample_rate": {
+      "maximum": 192000,
+      "minimum": 8000,
+      "title": "Sample Rate",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "transport.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "seq": {
+      "minimum": 0,
+      "title": "Seq",
+      "type": "integer"
+    },
+    "session_id": {
+      "format": "uuid",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "session_id",
+    "seq",
+    "revision",
+    "captured_at",
+    "playhead_samples",
+    "microphone_sample_index",
+    "sample_rate",
+    "drift_ppm"
+  ],
+  "title": "TransportSyncV1",
+  "type": "object"
+}

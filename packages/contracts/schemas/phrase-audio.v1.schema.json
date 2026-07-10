@@ -1,0 +1,106 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "byte_length": {
+      "exclusiveMinimum": 0,
+      "maximum": 100000000,
+      "title": "Byte Length",
+      "type": "integer"
+    },
+    "calibration_version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Calibration Version",
+      "type": "string"
+    },
+    "captured_at": {
+      "format": "date-time",
+      "title": "Captured At",
+      "type": "string"
+    },
+    "channels": {
+      "const": 1,
+      "default": 1,
+      "title": "Channels",
+      "type": "integer"
+    },
+    "codec": {
+      "enum": [
+        "pcm_s16le",
+        "wav_pcm_s16le"
+      ],
+      "title": "Codec",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "maxLength": 128,
+      "minLength": 16,
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "phrase_id": {
+      "format": "uuid",
+      "title": "Phrase Id",
+      "type": "string"
+    },
+    "sample_end": {
+      "exclusiveMinimum": 0,
+      "title": "Sample End",
+      "type": "integer"
+    },
+    "sample_rate": {
+      "maximum": 192000,
+      "minimum": 8000,
+      "title": "Sample Rate",
+      "type": "integer"
+    },
+    "sample_start": {
+      "minimum": 0,
+      "title": "Sample Start",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "phrase-audio.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "session_id": {
+      "format": "uuid",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Sha256",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "session_id",
+    "phrase_id",
+    "sequence",
+    "sample_start",
+    "sample_end",
+    "sample_rate",
+    "codec",
+    "sha256",
+    "byte_length",
+    "calibration_version",
+    "captured_at",
+    "idempotency_key"
+  ],
+  "title": "PhraseAudioV1",
+  "type": "object"
+}

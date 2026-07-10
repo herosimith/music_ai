@@ -1,0 +1,333 @@
+{
+  "$defs": {
+    "ArtifactPointer": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "source",
+            "vocal",
+            "accompaniment",
+            "f0",
+            "alignment",
+            "notes"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "model_release": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Release"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "kind",
+        "sha256"
+      ],
+      "title": "ArtifactPointer",
+      "type": "object"
+    },
+    "EvidencePointer": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "end_sample": {
+          "exclusiveMinimum": 0,
+          "title": "End Sample",
+          "type": "integer"
+        },
+        "start_sample": {
+          "minimum": 0,
+          "title": "Start Sample",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "start_sample",
+        "end_sample"
+      ],
+      "title": "EvidencePointer",
+      "type": "object"
+    },
+    "GateStatus": {
+      "enum": [
+        "accepted",
+        "practice_only",
+        "rejected"
+      ],
+      "title": "GateStatus",
+      "type": "string"
+    },
+    "QualityIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "maxLength": 80,
+          "pattern": "^[a-z0-9_.-]+$",
+          "title": "Code",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidencePointer"
+          },
+          "maxItems": 20,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "message_key": {
+          "maxLength": 120,
+          "pattern": "^[a-z0-9_.-]+$",
+          "title": "Message Key",
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "blocking"
+          ],
+          "title": "Severity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message_key"
+      ],
+      "title": "QualityIssue",
+      "type": "object"
+    },
+    "ReferenceSource": {
+      "enum": [
+        "canonical_notes",
+        "independent_stems",
+        "extracted_recording"
+      ],
+      "title": "ReferenceSource",
+      "type": "string"
+    },
+    "ScorableRegion": {
+      "additionalProperties": false,
+      "properties": {
+        "end_sample": {
+          "exclusiveMinimum": 0,
+          "title": "End Sample",
+          "type": "integer"
+        },
+        "monophonic_confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Monophonic Confidence",
+          "type": "number"
+        },
+        "ornament": {
+          "default": false,
+          "title": "Ornament",
+          "type": "boolean"
+        },
+        "reference_confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Reference Confidence",
+          "type": "number"
+        },
+        "region_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Region Id",
+          "type": "string"
+        },
+        "start_sample": {
+          "minimum": 0,
+          "title": "Start Sample",
+          "type": "integer"
+        },
+        "target_f0_hz": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 20000.0,
+          "title": "Target F0 Hz",
+          "type": "number"
+        }
+      },
+      "required": [
+        "region_id",
+        "start_sample",
+        "end_sample",
+        "target_f0_hz",
+        "reference_confidence",
+        "monophonic_confidence"
+      ],
+      "title": "ScorableRegion",
+      "type": "object"
+    },
+    "VersionStamp": {
+      "additionalProperties": false,
+      "properties": {
+        "calibration_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Calibration Version",
+          "type": "string"
+        },
+        "model_release": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model Release",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "score_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Score Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pipeline_version",
+        "model_release",
+        "score_version",
+        "calibration_version"
+      ],
+      "title": "VersionStamp",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/ArtifactPointer"
+      },
+      "maxItems": 30,
+      "minItems": 1,
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "duration_samples": {
+      "exclusiveMinimum": 0,
+      "title": "Duration Samples",
+      "type": "integer"
+    },
+    "gate_status": {
+      "$ref": "#/$defs/GateStatus"
+    },
+    "produced_at": {
+      "format": "date-time",
+      "title": "Produced At",
+      "type": "string"
+    },
+    "quality_issues": {
+      "items": {
+        "$ref": "#/$defs/QualityIssue"
+      },
+      "maxItems": 100,
+      "title": "Quality Issues",
+      "type": "array"
+    },
+    "reference_source": {
+      "$ref": "#/$defs/ReferenceSource"
+    },
+    "rights_basis": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Rights Basis",
+      "type": "string"
+    },
+    "sample_rate": {
+      "maximum": 192000,
+      "minimum": 8000,
+      "title": "Sample Rate",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "song-manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scorable_regions": {
+      "items": {
+        "$ref": "#/$defs/ScorableRegion"
+      },
+      "maxItems": 100000,
+      "title": "Scorable Regions",
+      "type": "array"
+    },
+    "scorable_vocal_coverage": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Scorable Vocal Coverage",
+      "type": "number"
+    },
+    "song_id": {
+      "format": "uuid",
+      "title": "Song Id",
+      "type": "string"
+    },
+    "source_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Source Sha256",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "versions": {
+      "$ref": "#/$defs/VersionStamp"
+    }
+  },
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "song_id",
+    "reference_source",
+    "rights_basis",
+    "source_sha256",
+    "sample_rate",
+    "duration_samples",
+    "gate_status",
+    "scorable_vocal_coverage",
+    "artifacts",
+    "versions",
+    "produced_at"
+  ],
+  "title": "SongManifestV1",
+  "type": "object"
+}

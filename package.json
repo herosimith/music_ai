@@ -1,0 +1,16 @@
+{
+  "name": "music-ai",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "contracts:generate": "pnpm --filter @music-ai/contracts generate",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck"
+  }
+}

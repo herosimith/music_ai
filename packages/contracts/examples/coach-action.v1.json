@@ -1,0 +1,18 @@
+{
+  "schema_version": "coach-action.v1",
+  "tenant_id": "11111111-1111-4111-8111-111111111111",
+  "action_id": "66666666-6666-4666-8666-666666666666",
+  "session_id": "22222222-2222-4222-8222-222222222222",
+  "phrase_id": "33333333-3333-4333-8333-333333333333",
+  "action_type": "loop",
+  "source_correction_ids": ["55555555-5555-4555-8555-555555555555"],
+  "message": "Repeat this phrase and keep the pitch center slightly higher.",
+  "arguments": {
+    "start_sample": 864000,
+    "end_sample": 912000,
+    "repetitions": 3
+  },
+  "provider": "rules.v1",
+  "score_version": "score.v1",
+  "produced_at": "2026-07-11T04:00:09Z"
+}
