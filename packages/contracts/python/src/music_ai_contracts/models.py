@@ -195,7 +195,16 @@ class SongManifestV1(ContractModel):
 
 
 class UserFeatureFrame(ContractModel):
-    sample_index: Annotated[int, Field(ge=0)]
+    sample_index: Annotated[
+        int,
+        Field(
+            ge=0,
+            description=(
+                "Sample position on the calibrated reference timeline. The audio-to-features "
+                "stage derives it from capture samples and transport sync evidence."
+            ),
+        ),
+    ]
     voiced: bool
     f0_hz: PositiveHertz | None = None
     f0_confidence: UnitInterval

@@ -9,6 +9,9 @@ export type EnergyDbfs = number;
 export type F0Confidence = number;
 export type F0Hz = number | null;
 export type LeakageConfidence = number;
+/**
+ * Sample position on the calibrated reference timeline. The audio-to-features stage derives it from capture samples and transport sync evidence.
+ */
 export type SampleIndex = number;
 export type Voiced = boolean;
 export type HopSamples = number;

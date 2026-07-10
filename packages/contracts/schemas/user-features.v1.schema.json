@@ -36,6 +36,7 @@
           "type": "number"
         },
         "sample_index": {
+          "description": "Sample position on the calibrated reference timeline. The audio-to-features stage derives it from capture samples and transport sync evidence.",
           "minimum": 0,
           "title": "Sample Index",
           "type": "integer"

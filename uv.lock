@@ -5,6 +5,7 @@ requires-python = "==3.12.*"
 [manifest]
 members = [
     "music-ai-contracts",
+    "music-ai-scoring",
     "music-ai-workspace",
 ]
 
@@ -81,6 +82,17 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "pydantic", specifier = ">=2.13,<3" }]
+
+[[package]]
+name = "music-ai-scoring"
+version = "0.1.0"
+source = { editable = "packages/scoring-core" }
+dependencies = [
+    { name = "music-ai-contracts" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "music-ai-contracts", editable = "packages/contracts/python" }]
 
 [[package]]
 name = "music-ai-workspace"
