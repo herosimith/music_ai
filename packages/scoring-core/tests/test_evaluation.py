@@ -3,8 +3,7 @@ from __future__ import annotations
 import pytest
 from music_ai_contracts.models import CorrectionType
 from music_ai_scoring import LabeledCorrection, evaluate_corrections, score_phrase, wilson_interval
-
-from .factories import PRODUCED_AT, make_features, make_manifest
+from scoring_testkit import PRODUCED_AT, make_features, make_manifest
 
 
 def sharp_correction():

@@ -13,8 +13,7 @@ from music_ai_contracts.models import (
     ReferenceSource,
 )
 from music_ai_scoring import DEFAULT_POLICY, ScoringInvariantError, score_phrase
-
-from .factories import (
+from scoring_testkit import (
     HOP_SAMPLES,
     PRODUCED_AT,
     REGION_END,

@@ -32,6 +32,8 @@ uv sync --all-packages
 pnpm install
 pnpm contracts:generate
 uv run --package music-ai-contracts pytest packages/contracts/python/tests
+uv run --package music-ai-scoring pytest packages/scoring-core/tests
+uv run --package music-ai-control-plane pytest services/control-plane/tests
 pnpm test
 pnpm build
 ```

@@ -7,17 +7,22 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "httpx2>=2.5,<3",
     "jsonschema>=4.26,<5",
     "pytest>=9.1,<10",
     "ruff>=0.15,<0.16",
 ]
 
 [tool.uv.workspace]
-members = ["packages/contracts/python", "packages/scoring-core"]
+members = [
+    "packages/contracts/python",
+    "packages/scoring-core",
+    "services/control-plane",
+]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-testpaths = ["packages"]
+testpaths = ["packages", "services"]
 
 [tool.ruff]
 line-length = 100
