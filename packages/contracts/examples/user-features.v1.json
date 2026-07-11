@@ -6,6 +6,11 @@
   "sample_rate": 48000,
   "hop_samples": 480,
   "source_audio_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "transport_evidence_sha256": "558d32e8f685e8433f249876bba002cb1ef712894526b7d64fa370a093f0eae0",
+  "model_releases": [
+    "user-f0.example.v1@sha256-1111111111111111111111111111111111111111111111111111111111111111",
+    "user-leakage.example.v1@sha256-2222222222222222222222222222222222222222222222222222222222222222"
+  ],
   "frames": [
     {
       "sample_index": 864000,
@@ -26,7 +31,7 @@
   ],
   "versions": {
     "pipeline_version": "pipeline.v1",
-    "model_release": "f0-research.v1",
+    "model_release": "model-set.454e6c567abce4204ea781db",
     "score_version": "score.v1",
     "calibration_version": "calibration.v1"
   },

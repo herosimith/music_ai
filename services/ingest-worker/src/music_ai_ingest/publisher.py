@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any, Protocol
 from uuid import UUID
 
@@ -103,11 +104,17 @@ class ControlPlanePublisher:
 
     def _request_json(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self._token}", **kwargs.pop("headers", {})}
-        response = getattr(self._client, method)(path, headers=headers, **kwargs)
+        try:
+            response = getattr(self._client, method)(path, headers=headers, **kwargs)
+        except httpx2.RequestError as error:
+            raise ControlPlanePublishError("control plane request failed") from error
         if not 200 <= response.status_code < 300:
             try:
-                code = response.json().get("code", "http_error")
+                error_payload = response.json()
             except (TypeError, ValueError):
+                error_payload = None
+            code = error_payload.get("code") if isinstance(error_payload, dict) else None
+            if not isinstance(code, str) or re.fullmatch(r"[a-z0-9_.-]{1,80}", code) is None:
                 code = "http_error"
             raise ControlPlanePublishError(
                 f"control plane returned HTTP {response.status_code} ({code})"

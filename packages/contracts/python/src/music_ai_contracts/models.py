@@ -85,6 +85,33 @@ class TransportSyncV1(ContractModel):
     drift_ppm: Annotated[float, Field(ge=-2_000, le=2_000, allow_inf_nan=False)]
 
 
+class TransportEvidenceV1(ContractModel):
+    schema_version: Literal["transport-evidence.v1"]
+    tenant_id: UUID
+    session_id: UUID
+    phrase_id: UUID
+    calibration_version: VersionName
+    events: list[TransportSyncV1] = Field(min_length=1, max_length=100_000)
+    produced_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def validate_events(self) -> TransportEvidenceV1:
+        if any(
+            event.tenant_id != self.tenant_id or event.session_id != self.session_id
+            for event in self.events
+        ):
+            raise ValueError("transport event identity must match its evidence envelope")
+        identities = [(event.seq, event.revision) for event in self.events]
+        if identities != sorted(set(identities)):
+            raise ValueError("transport events must be unique and sorted by seq and revision")
+        sample_rates = {event.sample_rate for event in self.events}
+        if len(sample_rates) != 1:
+            raise ValueError("transport events must use one sample rate")
+        if any(event.captured_at > self.produced_at for event in self.events):
+            raise ValueError("transport evidence cannot predate its captured events")
+        return self
+
+
 class PhraseAudioV1(ContractModel):
     schema_version: Literal["phrase-audio.v1"]
     tenant_id: UUID
@@ -295,6 +322,8 @@ class UserFeaturesV1(ContractModel):
     sample_rate: Annotated[int, Field(ge=8_000, le=192_000)]
     hop_samples: Annotated[int, Field(gt=0, le=16_384)]
     source_audio_sha256: Sha256
+    transport_evidence_sha256: Sha256 | None = None
+    model_releases: list[VersionName] = Field(default_factory=list, max_length=10)
     frames: list[UserFeatureFrame] = Field(min_length=1, max_length=1_000_000)
     versions: VersionStamp
     produced_at: AwareDatetime
@@ -306,6 +335,8 @@ class UserFeaturesV1(ContractModel):
             raise ValueError("feature frame sample_index values must be strictly increasing")
         if any(current - previous != self.hop_samples for previous, current in pairwise(indices)):
             raise ValueError("feature frame sample_index values must be contiguous by hop_samples")
+        if self.model_releases != sorted(set(self.model_releases)):
+            raise ValueError("feature model_releases must be unique and sorted")
         return self
 
 
@@ -348,6 +379,8 @@ class ScoreV1(ContractModel):
     phrase_id: UUID
     song_id: UUID
     reference_source: ReferenceSource
+    user_features_sha256: Sha256 | None = None
+    transport_evidence_sha256: Sha256 | None = None
     scored_coverage: UnitInterval
     metrics: dict[MetricName, NumericMetric] = Field(default_factory=dict, max_length=100)
     corrections: list[CorrectionEventV1] = Field(default_factory=list, max_length=10_000)
@@ -478,6 +511,7 @@ class CoachActionV1(RootModel[CoachAction]):
 
 CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "transport.v1": TransportSyncV1,
+    "transport-evidence.v1": TransportEvidenceV1,
     "phrase-audio.v1": PhraseAudioV1,
     "song-manifest.v1": SongManifestV1,
     "reference-f0.v1": ReferenceF0V1,

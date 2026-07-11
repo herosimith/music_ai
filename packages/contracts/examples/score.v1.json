@@ -5,6 +5,8 @@
   "phrase_id": "33333333-3333-4333-8333-333333333333",
   "song_id": "44444444-4444-4444-8444-444444444444",
   "reference_source": "extracted_recording",
+  "user_features_sha256": "b9db4aa5bfba28b6bbaceaa42808af35526203e540a6b3fcb64f17e739db0ed7",
+  "transport_evidence_sha256": "558d32e8f685e8433f249876bba002cb1ef712894526b7d64fa370a093f0eae0",
   "scored_coverage": 0.72,
   "metrics": {
     "pitch_center": {
@@ -53,7 +55,7 @@
   "abstained_reason": null,
   "versions": {
     "pipeline_version": "pipeline.v1",
-    "model_release": "f0-research.v1",
+    "model_release": "model-set.454e6c567abce4204ea781db",
     "score_version": "score.v1",
     "calibration_version": "calibration.v1"
   },

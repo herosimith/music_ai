@@ -20,6 +20,7 @@ from music_ai_control_plane.models import (
     ScoreRecord,
     Song,
     SongManifestRecord,
+    StoredAsset,
 )
 from music_ai_control_plane.security import ensure_bootstrap_credential
 from music_ai_control_plane.service import ControlPlaneService
@@ -114,6 +115,55 @@ def test_end_to_end_score_write_is_idempotent_and_version_bound(harness: Harness
             "Reference-Manifest-Id": str(manifest_id),
         },
         json=changed_score.model_dump(mode="json"),
+    )
+    assert response.status_code == 409
+    assert response.json()["code"] == "conflict"
+
+
+def test_score_evidence_must_be_bound_registered_and_available(harness: Harness) -> None:
+    song_id, _, manifest_id = create_ready_song(harness)
+    _, _, score, idempotency_key = create_phrase_and_score(
+        harness,
+        song_id,
+        manifest_id,
+        write_score=False,
+    )
+    headers = {
+        **harness.headers(),
+        "Reference-Manifest-Id": str(manifest_id),
+    }
+
+    missing = score.model_copy(update={"user_features_sha256": None})
+    response = harness.client.post(
+        "/internal/v1/scores",
+        headers={**headers, "Idempotency-Key": f"{idempotency_key}-missing"},
+        json=missing.model_dump(mode="json"),
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "invalid_request"
+
+    unregistered = score.model_copy(update={"user_features_sha256": "f" * 64})
+    response = harness.client.post(
+        "/internal/v1/scores",
+        headers={**headers, "Idempotency-Key": f"{idempotency_key}-unknown"},
+        json=unregistered.model_dump(mode="json"),
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "invalid_request"
+
+    with harness.app.state.database.session() as session:
+        asset = session.scalar(
+            select(StoredAsset).where(
+                StoredAsset.song_id == song_id,
+                StoredAsset.kind == "user_features",
+            )
+        )
+        assert asset is not None and asset.object_key is not None
+        harness.store.delete(asset.object_key)
+    response = harness.client.post(
+        "/internal/v1/scores",
+        headers={**headers, "Idempotency-Key": idempotency_key},
+        json=score.model_dump(mode="json"),
     )
     assert response.status_code == 409
     assert response.json()["code"] == "conflict"
@@ -420,7 +470,7 @@ def test_song_deletion_tombstones_first_then_clears_all_objects(harness: Harness
         tenant_id=harness.secondary_tenant_id,
         source_payload=b"secondary-preserved-source",
     )
-    assert len(harness.store.objects) == 9
+    assert len(harness.store.objects) == 11
 
     response = harness.client.delete(
         f"/v1/songs/{primary_song}",
@@ -439,7 +489,7 @@ def test_song_deletion_tombstones_first_then_clears_all_objects(harness: Harness
         headers=harness.headers(),
     )
     assert response.status_code == 200
-    assert response.json()["completed_tasks"] == 5
+    assert response.json()["completed_tasks"] == 7
     assert len(harness.store.objects) == 4
     assert (
         harness.client.get(

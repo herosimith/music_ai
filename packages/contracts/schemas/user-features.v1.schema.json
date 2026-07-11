@@ -111,6 +111,16 @@
       "title": "Hop Samples",
       "type": "integer"
     },
+    "model_releases": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Model Releases",
+      "type": "array"
+    },
     "phrase_id": {
       "format": "uuid",
       "title": "Phrase Id",
@@ -146,6 +156,19 @@
       "format": "uuid",
       "title": "Tenant Id",
       "type": "string"
+    },
+    "transport_evidence_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Transport Evidence Sha256"
     },
     "versions": {
       "$ref": "#/$defs/VersionStamp"

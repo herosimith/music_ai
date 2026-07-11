@@ -15,6 +15,21 @@ export type LeakageConfidence = number;
 export type SampleIndex = number;
 export type Voiced = boolean;
 export type HopSamples = number;
+/**
+ * @maxItems 10
+ */
+export type ModelReleases =
+  | []
+  | [string]
+  | [string, string]
+  | [string, string, string]
+  | [string, string, string, string]
+  | [string, string, string, string, string]
+  | [string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string]
+  | [string, string, string, string, string, string, string, string, string, string];
 export type PhraseId = string;
 export type ProducedAt = string;
 export type SampleRate = number;
@@ -22,6 +37,7 @@ export type SchemaVersion = "user-features.v1";
 export type SessionId = string;
 export type SourceAudioSha256 = string;
 export type TenantId = string;
+export type TransportEvidenceSha256 = string | null;
 export type CalibrationVersion = string;
 export type ModelRelease = string;
 export type PipelineVersion = string;
@@ -30,6 +46,7 @@ export type ScoreVersion = string;
 export interface UserFeaturesV1 {
   frames: Frames;
   hop_samples: HopSamples;
+  model_releases?: ModelReleases;
   phrase_id: PhraseId;
   produced_at: ProducedAt;
   sample_rate: SampleRate;
@@ -37,6 +54,7 @@ export interface UserFeaturesV1 {
   session_id: SessionId;
   source_audio_sha256: SourceAudioSha256;
   tenant_id: TenantId;
+  transport_evidence_sha256?: TransportEvidenceSha256;
   versions: VersionStamp;
 }
 /**

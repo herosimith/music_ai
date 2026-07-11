@@ -22,9 +22,11 @@ jobs:
       - run: uv run --package music-ai-contracts python -m music_ai_contracts.schema --check packages/contracts/schemas
       - run: uv run --package music-ai-contracts python -m music_ai_contracts.registry --check models/registry/registry.schema.json
       - run: uv run --package music-ai-contracts pytest packages/contracts/python/tests
+      - run: uv run --package music-ai-model-runtime pytest packages/model-runtime/tests
       - run: uv run --package music-ai-scoring pytest packages/scoring-core/tests
       - run: uv run --package music-ai-control-plane pytest services/control-plane/tests
       - run: uv run --package music-ai-ingest pytest services/ingest-worker/tests
+      - run: uv run --package music-ai-scoring-service pytest services/scoring/tests
 
   typescript:
     runs-on: ubuntu-latest

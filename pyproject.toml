@@ -16,13 +16,21 @@ dev = [
 [tool.uv.workspace]
 members = [
     "packages/contracts/python",
+    "packages/model-runtime",
     "packages/scoring-core",
     "services/control-plane",
     "services/ingest-worker",
+    "services/scoring",
 ]
 
 [tool.pytest.ini_options]
-addopts = "-ra"
+addopts = "-ra --import-mode=importlib"
+pythonpath = [
+    "packages/scoring-core/tests",
+    "services/control-plane/tests",
+    "services/ingest-worker/tests",
+    "services/scoring/tests",
+]
 testpaths = ["packages", "services"]
 
 [tool.ruff]

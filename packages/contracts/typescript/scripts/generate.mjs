@@ -15,6 +15,7 @@ const topLevelTypes = {
   "score-v1": "ScoreV1",
   "song-manifest-v1": "SongManifestV1",
   "transport-v1": "TransportSyncV1",
+  "transport-evidence-v1": "TransportEvidenceV1",
   "user-features-v1": "UserFeaturesV1",
 };
 

@@ -324,6 +324,32 @@
       "title": "Tenant Id",
       "type": "string"
     },
+    "transport_evidence_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Transport Evidence Sha256"
+    },
+    "user_features_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "User Features Sha256"
+    },
     "versions": {
       "$ref": "#/$defs/VersionStamp"
     }

@@ -5,6 +5,7 @@ from music_ai_contracts.models import (
     ReferenceF0V1,
     ScoreV1,
     SongManifestV1,
+    TransportEvidenceV1,
     TransportSyncV1,
     UserFeaturesV1,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "ReferenceF0V1",
     "ScoreV1",
     "SongManifestV1",
+    "TransportEvidenceV1",
     "TransportSyncV1",
     "UserFeaturesV1",
 ]

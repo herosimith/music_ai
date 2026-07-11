@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 import statistics
 from collections.abc import Sequence
@@ -439,6 +441,8 @@ def score_phrase(
         phrase_id=features.phrase_id,
         song_id=manifest.song_id,
         reference_source=manifest.reference_source,
+        user_features_sha256=_model_digest(features),
+        transport_evidence_sha256=features.transport_evidence_sha256,
         scored_coverage=scored_coverage,
         metrics=metrics,
         corrections=corrections,
@@ -489,6 +493,8 @@ def _abstain(
         phrase_id=features.phrase_id,
         song_id=manifest.song_id,
         reference_source=manifest.reference_source,
+        user_features_sha256=_model_digest(features),
+        transport_evidence_sha256=features.transport_evidence_sha256,
         scored_coverage=0.0,
         metrics={},
         corrections=[],
@@ -496,6 +502,16 @@ def _abstain(
         versions=versions,
         produced_at=produced_at,
     )
+
+
+def _model_digest(model: UserFeaturesV1) -> str:
+    payload = json.dumps(
+        model.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("ascii")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _covered_samples(region: ScorableRegion, features: UserFeaturesV1) -> int:

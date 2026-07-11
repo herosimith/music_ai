@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from music_ai_contracts.models import (
     ReferenceF0V1,
     ScoreV1,
     SongManifestV1,
+    TransportEvidenceV1,
     TransportSyncV1,
     UserFeaturesV1,
 )
@@ -114,6 +116,23 @@ def test_transport_rejects_naive_timestamp() -> None:
         TransportSyncV1.model_validate(data)
 
 
+def test_transport_evidence_requires_sorted_matching_events() -> None:
+    data = _example("transport-evidence.v1")
+    data["events"] = list(reversed(data["events"]))
+    with pytest.raises(ValidationError, match="unique and sorted"):
+        TransportEvidenceV1.model_validate(data)
+
+    data = _example("transport-evidence.v1")
+    data["events"][0]["session_id"] = "99999999-9999-4999-8999-999999999999"
+    with pytest.raises(ValidationError, match="identity must match"):
+        TransportEvidenceV1.model_validate(data)
+
+    data = _example("transport-evidence.v1")
+    data["produced_at"] = "2026-07-11T04:00:03Z"
+    with pytest.raises(ValidationError, match="cannot predate"):
+        TransportEvidenceV1.model_validate(data)
+
+
 @pytest.mark.parametrize("status", ["rejected", "practice_only"])
 def test_non_scoring_manifest_cannot_claim_scorable_regions(status: str) -> None:
     data = _example("song-manifest.v1")
@@ -164,6 +183,26 @@ def test_unvoiced_frame_cannot_carry_f0() -> None:
     data["frames"][0]["voiced"] = False
     with pytest.raises(ValidationError, match="unvoiced frames cannot"):
         UserFeaturesV1.model_validate(data)
+
+
+def test_feature_model_releases_are_unique_and_sorted() -> None:
+    data = _example("user-features.v1")
+    data["model_releases"] = list(reversed(data["model_releases"]))
+    with pytest.raises(ValidationError, match="unique and sorted"):
+        UserFeaturesV1.model_validate(data)
+
+
+def test_score_example_binds_canonical_feature_and_transport_examples() -> None:
+    transport = TransportEvidenceV1.model_validate(_example("transport-evidence.v1"))
+    features = UserFeaturesV1.model_validate(_example("user-features.v1"))
+    score = ScoreV1.model_validate(_example("score.v1"))
+
+    transport_digest = _canonical_digest(transport)
+    feature_digest = _canonical_digest(features)
+    assert features.transport_evidence_sha256 == transport_digest
+    assert score.transport_evidence_sha256 == transport_digest
+    assert score.user_features_sha256 == feature_digest
+    assert score.versions.model_release == features.versions.model_release
 
 
 def test_feature_frames_must_be_contiguous() -> None:
@@ -231,6 +270,16 @@ def test_registry_rejects_duplicate_model_ids() -> None:
 
 def _example(schema_version: str) -> dict[str, object]:
     return json.loads((CONTRACTS_ROOT / "examples" / f"{schema_version}.json").read_text())
+
+
+def _canonical_digest(model) -> str:
+    payload = json.dumps(
+        model.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("ascii")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _model_record() -> dict[str, object]:

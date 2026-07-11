@@ -444,6 +444,8 @@ class ControlPlaneService:
                 raise InvalidRequestError("score idempotency retry changed its manifest version")
             if existing.deleted_at is not None:
                 raise ConflictError("score was deleted and cannot be recreated with the same key")
+            self._song(tenant_id, score.song_id, for_update=True)
+            self._require_score_evidence(tenant_id, score)
             return existing
         song = self._song(tenant_id, score.song_id, for_update=True)
         practice = self._practice_session(tenant_id, score.session_id, for_update=True)
@@ -482,6 +484,7 @@ class ControlPlaneService:
             raise InvalidRequestError("score reference source does not match its manifest")
         if score.produced_at < manifest_record.produced_at:
             raise InvalidRequestError("score cannot predate its reference manifest")
+        self._require_score_evidence(tenant_id, score)
 
         record = ScoreRecord(
             tenant_id=tenant_id,
@@ -503,6 +506,52 @@ class ControlPlaneService:
         self.session.add(record)
         self._commit("score idempotency key already exists")
         return record
+
+    def _require_score_evidence(self, tenant_id: UUID, score: ScoreV1) -> None:
+        expected = {
+            "transport": score.transport_evidence_sha256,
+            "user_features": score.user_features_sha256,
+        }
+        if any(digest is None for digest in expected.values()):
+            raise InvalidRequestError(
+                "authoritative scores must bind transport and user feature evidence"
+            )
+        digests = {digest for digest in expected.values() if digest is not None}
+        assets = list(
+            self.session.scalars(
+                select(StoredAsset).where(
+                    StoredAsset.tenant_id == tenant_id,
+                    StoredAsset.song_id == score.song_id,
+                    StoredAsset.kind.in_(expected),
+                    StoredAsset.sha256.in_(digests),
+                    StoredAsset.deleted_at.is_(None),
+                )
+            )
+        )
+        for kind, digest in expected.items():
+            matches = [
+                asset
+                for asset in assets
+                if asset.kind == kind
+                and asset.sha256 == digest
+                and asset.media_type == "application/json"
+                and asset.model_release is not None
+                and (
+                    kind != "user_features"
+                    or asset.model_release == score.versions.model_release
+                )
+            ]
+            if not matches:
+                raise InvalidRequestError(
+                    "score references unregistered or mismatched evidence"
+                )
+            if not any(
+                asset.state == AudioState.STORED
+                and asset.object_key is not None
+                and self.object_store.exists(asset.object_key)
+                for asset in matches
+            ):
+                raise ConflictError("score evidence is unavailable")
 
     def list_scores(self, tenant_id: UUID, session_id: UUID) -> list[ScoreRecord]:
         self._practice_session(tenant_id, session_id)

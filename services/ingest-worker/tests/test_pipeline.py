@@ -58,9 +58,7 @@ def test_accepted_pipeline_is_byte_deterministic_and_idempotent(tmp_path: Path) 
     assert len(track.candidates) == 2
     assert "@sha256-" in track.model_release
     assert all("@sha256-" in artifact.model_release for artifact in first.artifacts)
-    assert track.model_release.endswith(
-        hashlib.sha256(b"approved-f0-weights").hexdigest()
-    )
+    assert track.model_release.endswith(hashlib.sha256(b"approved-f0-weights").hexdigest())
     assert first.artifacts[0].model_release.endswith(
         hashlib.sha256(b"approved-separation-weights").hexdigest()
     )

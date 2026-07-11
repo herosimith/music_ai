@@ -1,12 +1,13 @@
 [project]
-name = "music-ai-ingest"
+name = "music-ai-scoring-service"
 version = "0.1.0"
-description = "Fail-closed offline reference analysis for music_ai"
+description = "Authoritative audio feature extraction and score orchestration for music_ai"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "httpx2>=2.5,<3",
     "music-ai-contracts",
     "music-ai-model-runtime",
+    "music-ai-scoring",
     "pydantic>=2.12,<3",
 ]
 
@@ -15,8 +16,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/music_ai_ingest"]
+packages = ["src/music_ai_scoring_service"]
 
 [tool.uv.sources]
 music-ai-contracts = { workspace = true }
 music-ai-model-runtime = { workspace = true }
+music-ai-scoring = { workspace = true }

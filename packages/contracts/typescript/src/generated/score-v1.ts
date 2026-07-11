@@ -270,6 +270,8 @@ export type ScoredCoverage = number;
 export type SessionId1 = string;
 export type SongId = string;
 export type TenantId1 = string;
+export type TransportEvidenceSha256 = string | null;
+export type UserFeaturesSha256 = string | null;
 export type CalibrationVersion = string;
 export type ModelRelease = string;
 export type PipelineVersion = string;
@@ -287,6 +289,8 @@ export interface ScoreV1 {
   session_id: SessionId1;
   song_id: SongId;
   tenant_id: TenantId1;
+  transport_evidence_sha256?: TransportEvidenceSha256;
+  user_features_sha256?: UserFeaturesSha256;
   versions: VersionStamp;
 }
 /**

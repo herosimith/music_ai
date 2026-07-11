@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+import httpx2
 import pytest
 from ingest_testkit import make_job, make_pipeline
 from music_ai_ingest.artifacts import sha256_hex
@@ -56,6 +57,28 @@ def test_publisher_rejects_short_tokens_and_sanitizes_http_errors() -> None:
     )
     publisher = ControlPlanePublisher("http://testserver", TOKEN, client=client)
     with pytest.raises(ControlPlanePublishError, match=r"HTTP 409 \(conflict\)") as error:
+        publisher.publish_artifact(SONG_ID, _artifact())
+    assert "provider-secret" not in str(error.value)
+
+    publisher = ControlPlanePublisher(
+        "http://testserver",
+        TOKEN,
+        client=StubClient(posts=[StubResponse(503, ["provider-secret"])]),
+    )
+    with pytest.raises(ControlPlanePublishError, match=r"HTTP 503 \(http_error\)") as error:
+        publisher.publish_artifact(SONG_ID, _artifact())
+    assert "provider-secret" not in str(error.value)
+
+    class FailingClient:
+        def post(self, path: str, **kwargs):
+            raise httpx2.ConnectError("provider-secret")
+
+    publisher = ControlPlanePublisher(
+        "http://testserver",
+        TOKEN,
+        client=FailingClient(),
+    )
+    with pytest.raises(ControlPlanePublishError, match="request failed") as error:
         publisher.publish_artifact(SONG_ID, _artifact())
     assert "provider-secret" not in str(error.value)
 

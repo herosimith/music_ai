@@ -12,7 +12,7 @@ def test_model_set_release_is_order_independent() -> None:
 
 def test_artifact_release_binds_full_weight_digest_within_contract_limit() -> None:
     digest = "a" * 64
-    release = bound_model_release("model-id-" + "x" * 150, digest)
+    release = bound_model_release("model-id-" + "x" * 119, digest)
     assert len(release) <= 128
     assert release.endswith(f"@sha256-{digest}")
     with pytest.raises(ValueError, match="lowercase hexadecimal"):

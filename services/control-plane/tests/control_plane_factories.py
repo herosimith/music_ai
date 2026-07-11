@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
@@ -185,6 +186,19 @@ def create_phrase_and_score(
     )
     assert response.status_code == 200, response.text
 
+    transport_payload = json.dumps(
+        {"fixture": "transport", "phrase_id": str(phrase_id)},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("ascii")
+    feature_payload = json.dumps(
+        {"fixture": "user_features", "phrase_id": str(phrase_id)},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("ascii")
+    transport_sha256 = hashlib.sha256(transport_payload).hexdigest()
+    feature_sha256 = hashlib.sha256(feature_payload).hexdigest()
+
     score = ScoreV1(
         schema_version="score.v1",
         tenant_id=selected_tenant,
@@ -192,6 +206,8 @@ def create_phrase_and_score(
         phrase_id=phrase_id,
         song_id=song_id,
         reference_source=ReferenceSource.INDEPENDENT_STEMS,
+        user_features_sha256=feature_sha256,
+        transport_evidence_sha256=transport_sha256,
         scored_coverage=1.0,
         metrics={
             "timeline_coverage": NumericMetric(
@@ -211,6 +227,29 @@ def create_phrase_and_score(
         ),
         produced_at=datetime.now(UTC),
     )
+    for kind, payload, digest, model_release in (
+        ("transport", transport_payload, transport_sha256, CALIBRATION_VERSION),
+        ("user_features", feature_payload, feature_sha256, score.versions.model_release),
+    ):
+        response = harness.client.post(
+            f"/internal/v1/songs/{song_id}/assets",
+            headers=headers,
+            json={
+                "kind": kind,
+                "sha256": digest,
+                "byte_length": len(payload),
+                "media_type": "application/json",
+                "model_release": model_release,
+            },
+        )
+        assert response.status_code == 200, response.text
+        asset_id = response.json()["id"]
+        response = harness.client.put(
+            f"/internal/v1/assets/{asset_id}/content",
+            headers={**headers, "Content-Type": "application/json"},
+            content=payload,
+        )
+        assert response.status_code == 200, response.text
     idempotency_key = f"score-{phrase_id}"
     if write_score:
         response = harness.client.post(
