@@ -885,7 +885,8 @@ input:disabled {
   background: rgba(23, 32, 28, 0.54);
 }
 
-.settings-dialog {
+.settings-dialog,
+.microphone-dialog {
   width: min(100%, 440px);
   overflow: hidden;
   border: 1px solid var(--line-strong);
@@ -893,6 +894,10 @@ input:disabled {
   border-radius: 6px;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.microphone-dialog {
+  width: min(100%, 500px);
 }
 
 .dialog-header {
@@ -947,6 +952,138 @@ input:disabled {
 .setting-value.muted {
   color: var(--ink-muted);
   background: var(--surface-muted);
+}
+
+.compact-button {
+  min-height: 34px;
+  padding: 7px 11px;
+  font-size: 11px;
+}
+
+.microphone-check-body {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.microphone-check-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--cyan);
+  border-radius: 5px;
+  background: var(--surface-muted);
+}
+
+.microphone-check-status.ready,
+.microphone-check-status.quiet {
+  border-left-color: var(--green);
+  background: var(--green-soft);
+}
+
+.microphone-check-status.error {
+  border-left-color: var(--coral);
+  background: var(--danger-soft);
+}
+
+.microphone-check-status.checking .microphone-check-icon {
+  animation: microphone-pulse 900ms ease-in-out infinite alternate;
+}
+
+.microphone-check-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: var(--cyan);
+  background: var(--surface);
+}
+
+.microphone-check-status.ready .microphone-check-icon,
+.microphone-check-status.quiet .microphone-check-icon {
+  color: var(--green);
+}
+
+.microphone-check-status.error .microphone-check-icon {
+  color: var(--coral-dark);
+}
+
+.microphone-check-status > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.microphone-check-status strong {
+  font-size: 14px;
+}
+
+.microphone-check-status span {
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.microphone-level-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.microphone-level-row > strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.microphone-level-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--surface-muted);
+}
+
+.microphone-level-track > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+  transition: width 80ms linear;
+}
+
+.microphone-reminder-check {
+  width: fit-content;
+}
+
+.microphone-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-muted);
+}
+
+@keyframes microphone-pulse {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 1120px) {
@@ -1196,6 +1333,30 @@ input:disabled {
     align-items: stretch;
     flex-direction: column;
   }
+
+  .dialog-backdrop {
+    padding: 10px;
+  }
+
+  .microphone-dialog {
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+  }
+
+  .microphone-check-body {
+    padding: 16px;
+  }
+
+  .microphone-dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 12px 16px;
+  }
+
+  .microphone-dialog-actions .button,
+  .microphone-dialog-actions .icon-text-button {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1203,6 +1364,8 @@ input:disabled {
   *::before,
   *::after {
     scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

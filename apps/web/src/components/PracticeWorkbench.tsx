@@ -35,6 +35,10 @@ import {
 } from "react";
 import type WaveSurfer from "wavesurfer.js";
 
+import {
+  MicrophoneCheckDialog,
+  type MicrophoneDialogState,
+} from "@/components/MicrophoneCheckDialog";
 import { type LocalAnalysis, analyzeTake } from "@/lib/analysis";
 import {
   createDemoAudio,
@@ -45,6 +49,16 @@ import {
   sliceSamples,
 } from "@/lib/audio";
 import { MicrophoneCapture } from "@/lib/capture";
+import {
+  checkMicrophone,
+  isMicrophoneCheckAbort,
+  microphoneCheckErrorMessage,
+  type MicrophoneCheckResult,
+} from "@/lib/microphoneCheck";
+import {
+  readMicrophoneCheckSkipped,
+  writeMicrophoneCheckSkipped,
+} from "@/lib/microphonePreference";
 import {
   classifyMgg,
   isMggFilename,
@@ -101,6 +115,17 @@ export function PracticeWorkbench() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [lastCapture, setLastCapture] = useState<LastCapture | null>(null);
+  const [microphoneDialogOpen, setMicrophoneDialogOpen] = useState(false);
+  const [microphoneDialogState, setMicrophoneDialogState] =
+    useState<MicrophoneDialogState>("idle");
+  const [microphoneCheckResult, setMicrophoneCheckResult] =
+    useState<MicrophoneCheckResult | null>(null);
+  const [microphoneCheckError, setMicrophoneCheckError] = useState<string | null>(null);
+  const [microphoneLevel, setMicrophoneLevel] = useState(0);
+  const [microphoneDoNotRemind, setMicrophoneDoNotRemind] = useState(false);
+  const [microphoneCheckSkipped, setMicrophoneCheckSkipped] = useState(() =>
+    readMicrophoneCheckSkipped(),
+  );
   const waveformElement = useRef<HTMLDivElement>(null);
   const waveform = useRef<WaveSurfer | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -111,6 +136,8 @@ export function PracticeWorkbench() {
   const mountedRef = useRef(true);
   const settingsCloseButton = useRef<HTMLButtonElement>(null);
   const settingsReturnFocus = useRef<HTMLElement | null>(null);
+  const microphoneCheckAbort = useRef<AbortController | null>(null);
+  const microphoneReturnFocus = useRef<HTMLElement | null>(null);
   const stopSessionRef = useRef<() => Promise<void>>(async () => undefined);
   const selectionRef = useRef({ start: 0, end: 0 });
 
@@ -185,6 +212,8 @@ export function PracticeWorkbench() {
       capture.current = null;
       transport.current = null;
       recordingRef.current = false;
+      microphoneCheckAbort.current?.abort();
+      microphoneCheckAbort.current = null;
       void activeCapture?.stop();
     };
   }, []);
@@ -383,11 +412,105 @@ export function PracticeWorkbench() {
       transport.current = null;
       await nextCapture.stop().catch(() => undefined);
       if (!mountedRef.current) return;
+      writeMicrophoneCheckSkipped(false);
+      setMicrophoneCheckSkipped(false);
       setSessionState("error");
       setErrorMessage("无法使用麦克风。请允许浏览器访问麦克风后重试。");
       capture.current = null;
     }
   }, [rightsAccepted, selectionEnd, selectionStart, song]);
+
+  const resetMicrophoneDialog = useCallback((restoreFocus: boolean) => {
+    microphoneCheckAbort.current?.abort();
+    microphoneCheckAbort.current = null;
+    setMicrophoneDialogOpen(false);
+    setMicrophoneDialogState("idle");
+    setMicrophoneCheckResult(null);
+    setMicrophoneCheckError(null);
+    setMicrophoneLevel(0);
+    setMicrophoneDoNotRemind(false);
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => microphoneReturnFocus.current?.focus());
+    }
+  }, []);
+
+  const closeMicrophoneDialog = useCallback(() => {
+    resetMicrophoneDialog(true);
+  }, [resetMicrophoneDialog]);
+
+  const runMicrophoneCheck = useCallback(async () => {
+    if (microphoneCheckAbort.current) return;
+    const controller = new AbortController();
+    microphoneCheckAbort.current = controller;
+    setMicrophoneDialogState("checking");
+    setMicrophoneCheckResult(null);
+    setMicrophoneCheckError(null);
+    setMicrophoneLevel(0);
+    try {
+      const result = await checkMicrophone({
+        signal: controller.signal,
+        onLevel: (level) => {
+          if (mountedRef.current && microphoneCheckAbort.current === controller) {
+            setMicrophoneLevel(level);
+          }
+        },
+      });
+      if (!mountedRef.current || microphoneCheckAbort.current !== controller) return;
+      setMicrophoneCheckResult(result);
+      setMicrophoneLevel(result.peakLevel);
+      setMicrophoneDialogState(result.signalDetected ? "ready" : "quiet");
+    } catch (error) {
+      if (
+        !mountedRef.current ||
+        microphoneCheckAbort.current !== controller ||
+        isMicrophoneCheckAbort(error)
+      ) {
+        return;
+      }
+      setMicrophoneDialogState("error");
+      setMicrophoneCheckError(microphoneCheckErrorMessage(error));
+    } finally {
+      if (microphoneCheckAbort.current === controller) microphoneCheckAbort.current = null;
+    }
+  }, []);
+
+  const requestStartSession = useCallback(() => {
+    if (
+      !song ||
+      !waveform.current ||
+      !rightsAccepted ||
+      selectionEnd - selectionStart < 0.5
+    ) {
+      return;
+    }
+    if (microphoneCheckSkipped) {
+      void startSession();
+      return;
+    }
+    microphoneReturnFocus.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setMicrophoneDialogState("idle");
+    setMicrophoneCheckResult(null);
+    setMicrophoneCheckError(null);
+    setMicrophoneLevel(0);
+    setMicrophoneDoNotRemind(false);
+    setMicrophoneDialogOpen(true);
+  }, [microphoneCheckSkipped, rightsAccepted, selectionEnd, selectionStart, song, startSession]);
+
+  const confirmMicrophoneAndStart = useCallback(() => {
+    if (microphoneDialogState !== "ready" && microphoneDialogState !== "quiet") return;
+    if (microphoneDoNotRemind) {
+      const persisted = writeMicrophoneCheckSkipped(true);
+      setMicrophoneCheckSkipped(persisted);
+    }
+    resetMicrophoneDialog(false);
+    void startSession();
+  }, [microphoneDialogState, microphoneDoNotRemind, resetMicrophoneDialog, startSession]);
+
+  const restoreMicrophoneCheck = useCallback(() => {
+    writeMicrophoneCheckSkipped(false);
+    setMicrophoneCheckSkipped(false);
+  }, []);
 
   const togglePlayback = useCallback(() => {
     if (!waveform.current || sessionState === "recording") return;
@@ -437,7 +560,7 @@ export function PracticeWorkbench() {
       if (event.key !== "Tab") return;
       const focusable = Array.from(
         event.currentTarget.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+          ':is(button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"]))',
         ),
       );
       if (focusable.length === 0) {
@@ -471,7 +594,10 @@ export function PracticeWorkbench() {
   const overlayLeft = duration > 0 ? (selectionStart / duration) * 100 : 0;
   const overlayWidth = duration > 0 ? (selectedDuration / duration) * 100 : 0;
   const sourceLocked =
-    sessionState === "arming" || sessionState === "recording" || sessionState === "analyzing";
+    microphoneDialogOpen ||
+    sessionState === "arming" ||
+    sessionState === "recording" ||
+    sessionState === "analyzing";
 
   return (
     <div className="app-shell">
@@ -714,12 +840,13 @@ export function PracticeWorkbench() {
                   <button
                     className="button record"
                     disabled={
+                      microphoneDialogOpen ||
                       !song ||
                       !rightsAccepted ||
                       sessionState === "arming" ||
                       sessionState === "analyzing"
                     }
-                    onClick={() => void startSession()}
+                    onClick={requestStartSession}
                   >
                     <Mic size={17} />
                     {sessionState === "arming" ? "准备麦克风" : "开始练唱"}
@@ -923,6 +1050,19 @@ export function PracticeWorkbench() {
             </div>
             <div className="setting-row">
               <div>
+                <strong>开唱前检查麦克风</strong>
+                <span>{microphoneCheckSkipped ? "已跳过，可随时恢复" : "每次开始练唱前检查"}</span>
+              </div>
+              {microphoneCheckSkipped ? (
+                <button className="button secondary compact-button" onClick={restoreMicrophoneCheck}>
+                  恢复提醒
+                </button>
+              ) : (
+                <span className="setting-value">ON</span>
+              )}
+            </div>
+            <div className="setting-row">
+              <div>
                 <strong>权威评分服务</strong>
                 <span>等待服务器模型注册表配置</span>
               </div>
@@ -931,6 +1071,19 @@ export function PracticeWorkbench() {
           </section>
         </div>
       )}
+
+      <MicrophoneCheckDialog
+        open={microphoneDialogOpen}
+        state={microphoneDialogState}
+        result={microphoneCheckResult}
+        errorMessage={microphoneCheckError}
+        level={microphoneLevel}
+        doNotRemind={microphoneDoNotRemind}
+        onDoNotRemindChange={setMicrophoneDoNotRemind}
+        onCheck={() => void runMicrophoneCheck()}
+        onConfirm={confirmMicrophoneAndStart}
+        onClose={closeMicrophoneDialog}
+      />
     </div>
   );
 }

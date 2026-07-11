@@ -1,3 +1,5 @@
+import { MICROPHONE_CHECK_CONSTRAINTS } from "./microphoneCheck";
+
 export interface CapturedAudio {
   samples: Float32Array;
   sampleRate: number;
@@ -22,14 +24,7 @@ export class MicrophoneCapture {
 
   async start(): Promise<void> {
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      });
+      this.stream = await navigator.mediaDevices.getUserMedia(MICROPHONE_CHECK_CONSTRAINTS);
       this.context = new AudioContext({ latencyHint: "interactive" });
       await this.context.audioWorklet.addModule("/audio-capture-processor.js");
       this.source = this.context.createMediaStreamSource(this.stream);
