@@ -36,6 +36,15 @@ def test_production_settings_require_postgres_migrations_and_no_static_bootstrap
             token_pepper=PEPPER,
             auto_create_schema=False,
         )
+    with pytest.raises(ValidationError, match="maintenance interval"):
+        Settings(
+            environment="production",
+            database_url="postgresql+psycopg://app:password@db/music_ai",
+            token_pepper=PEPPER,
+            auto_create_schema=False,
+            raw_audio_ttl_seconds=300,
+            maintenance_interval_seconds=300,
+        )
 
 
 def test_bootstrap_configuration_is_all_or_nothing() -> None:

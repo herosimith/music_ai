@@ -53,7 +53,9 @@ AudioWorklet microphone capture, Pitchy-based preview corrections, session histo
 WAV/transport downloads. Browser results are explicitly a local preview; authoritative
 server scoring remains confidence-gated by the model registry and scoring service.
 
-Docker manifests are included later in the implementation, but local development and CI do not depend on Docker.
+Production container manifests are documented in `docs/deployment.md`. They deploy the Web,
+control-plane, PostgreSQL, retention maintenance, and HTTPS gateway; model-backed workers remain
+disabled until the production model registry is approved.
 
 ## Product boundary
 

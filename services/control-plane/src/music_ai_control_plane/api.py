@@ -16,6 +16,8 @@ from fastapi import (
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from music_ai_contracts.models import PhraseAudioV1, ScoreV1, SongManifestV1
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
@@ -92,6 +94,14 @@ def create_app(
 
     @app.get("/health", response_model=HealthView)
     def health() -> HealthView:
+        return HealthView(status="ok")
+
+    @app.get("/ready", response_model=HealthView)
+    def ready(session: Annotated[Session, Depends(get_session)]) -> HealthView:
+        try:
+            session.execute(text("SELECT 1"))
+        except SQLAlchemyError as error:
+            raise HTTPException(status_code=503, detail="database is unavailable") from error
         return HealthView(status="ok")
 
     @app.post("/v1/songs", response_model=SongView)

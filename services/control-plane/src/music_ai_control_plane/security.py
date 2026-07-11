@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
@@ -91,8 +92,35 @@ def ensure_bootstrap_credential(
     pepper: str,
     scopes: frozenset[str] = ALL_SCOPES,
 ) -> Tenant:
+    return register_tenant_credential(
+        session,
+        tenant_slug=tenant_slug,
+        tenant_name=tenant_name,
+        credential_name="development bootstrap",
+        token=token,
+        pepper=pepper,
+        scopes=scopes,
+    )
+
+
+def register_tenant_credential(
+    session: Session,
+    *,
+    tenant_slug: str,
+    tenant_name: str,
+    credential_name: str,
+    token: str,
+    pepper: str,
+    scopes: frozenset[str] = ALL_SCOPES,
+) -> Tenant:
     if not scopes <= ALL_SCOPES:
-        raise ValueError("bootstrap credential contains unknown scopes")
+        raise ValueError("credential contains unknown scopes")
+    if re.fullmatch(r"[a-z0-9-]{2,63}", tenant_slug) is None:
+        raise ValueError("tenant slug must contain 2 to 63 lowercase URL-safe characters")
+    if not tenant_name or len(tenant_name) > 200:
+        raise ValueError("tenant name must contain 1 to 200 characters")
+    if not credential_name or len(credential_name) > 120:
+        raise ValueError("credential name must contain 1 to 120 characters")
     tenant = session.scalar(select(Tenant).where(Tenant.slug == tenant_slug))
     if tenant is None:
         tenant = Tenant(slug=tenant_slug, name=tenant_name)
@@ -107,12 +135,14 @@ def ensure_bootstrap_credential(
         session.add(
             ApiCredential(
                 tenant_id=tenant.id,
-                name="development bootstrap",
+                name=credential_name,
                 token_digest=digest,
                 scopes=sorted(scopes),
             )
         )
     elif credential.tenant_id != tenant.id:
-        raise ValueError("bootstrap token is already bound to another tenant")
+        raise ValueError("credential token is already bound to another tenant")
+    elif credential.revoked_at is not None:
+        raise ValueError("credential token has been revoked and cannot be reused")
     session.commit()
     return tenant

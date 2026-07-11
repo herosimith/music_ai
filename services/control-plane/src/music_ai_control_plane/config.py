@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     object_store_root: Path = Path(".local/object-store")
     token_pepper: SecretStr = Field(min_length=32)
     raw_audio_ttl_seconds: int = Field(default=900, ge=1, le=86_400)
+    maintenance_interval_seconds: int = Field(default=300, ge=10, le=86_399)
     max_upload_bytes: int = Field(default=100_000_000, ge=1, le=100_000_000)
     deletion_retry_limit: int = Field(default=5, ge=1, le=20)
     auto_create_schema: bool = True
@@ -29,6 +30,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_environment_safety(self) -> Settings:
+        if self.maintenance_interval_seconds >= self.raw_audio_ttl_seconds:
+            raise ValueError("maintenance interval must be shorter than the raw audio TTL")
         bootstrap_values = (
             self.bootstrap_tenant_slug,
             self.bootstrap_tenant_name,

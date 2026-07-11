@@ -31,6 +31,7 @@ from sqlalchemy.exc import IntegrityError
 
 def test_health_is_public_but_resources_require_authentication(harness: Harness) -> None:
     assert harness.client.get("/health").json() == {"status": "ok"}
+    assert harness.client.get("/ready").json() == {"status": "ok"}
 
     response = harness.client.get("/v1/songs/11111111-1111-4111-8111-111111111111")
     assert response.status_code == 401

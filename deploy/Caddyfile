@@ -1,0 +1,27 @@
+{$MUSIC_AI_SITE_ADDRESS} {
+	encode zstd gzip
+
+	request_body {
+		max_size 100MB
+	}
+
+	handle_path /api/* {
+		reverse_proxy control-plane:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "microphone=(self)"
+		-Server
+	}
+}
+
+:8081 {
+	respond /health 200
+}

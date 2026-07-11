@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+!deploy/.env.production.example
+deploy/.env.production
+deploy/secrets/
 .venv/
 __pycache__/
 .pytest_cache/
