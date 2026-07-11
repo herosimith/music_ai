@@ -39,7 +39,7 @@ import {
   MicrophoneCheckDialog,
   type MicrophoneDialogState,
 } from "@/components/MicrophoneCheckDialog";
-import { type LocalAnalysis, analyzeTake } from "@/lib/analysis";
+import { type LocalAnalysis, type LocalCorrection, analyzeTake } from "@/lib/analysis";
 import {
   createDemoAudio,
   decodeAudioBlob,
@@ -49,6 +49,13 @@ import {
   sliceSamples,
 } from "@/lib/audio";
 import { MicrophoneCapture } from "@/lib/capture";
+import {
+  assessCaptureSignal,
+  captureSignalErrorMessage,
+  type CaptureSignalSummary,
+} from "@/lib/captureSignal";
+import { clientFallbackCoach, requestCoach } from "@/lib/coachClient";
+import type { CoachResponse } from "@/lib/coachProtocol";
 import {
   checkMicrophone,
   isMicrophoneCheckAbort,
@@ -74,6 +81,7 @@ import {
 
 type ViewName = "practice" | "history";
 type SessionState = "idle" | "arming" | "recording" | "analyzing" | "ready" | "error";
+type CorrectionPlaybackSource = "capture" | "reference";
 
 interface SongSource {
   name: string;
@@ -93,8 +101,9 @@ interface HistoryEntry {
 }
 
 interface LastCapture {
-  samples: Float32Array;
+  alignedSamples: Float32Array;
   sampleRate: number;
+  signal: CaptureSignalSummary;
   transport: TransportPoint[];
 }
 
@@ -115,6 +124,12 @@ export function PracticeWorkbench() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [lastCapture, setLastCapture] = useState<LastCapture | null>(null);
+  const [captureCurrentTime, setCaptureCurrentTime] = useState(0);
+  const [captureIsPlaying, setCaptureIsPlaying] = useState(false);
+  const [correctionPlaybackSource, setCorrectionPlaybackSource] =
+    useState<CorrectionPlaybackSource>("capture");
+  const [coachResponse, setCoachResponse] = useState<CoachResponse | null>(null);
+  const [coachLoading, setCoachLoading] = useState(false);
   const [microphoneDialogOpen, setMicrophoneDialogOpen] = useState(false);
   const [microphoneDialogState, setMicrophoneDialogState] =
     useState<MicrophoneDialogState>("idle");
@@ -128,6 +143,8 @@ export function PracticeWorkbench() {
   );
   const waveformElement = useRef<HTMLDivElement>(null);
   const waveform = useRef<WaveSurfer | null>(null);
+  const captureAudio = useRef<HTMLAudioElement>(null);
+  const capturePlaybackEnd = useRef<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const capture = useRef<MicrophoneCapture | null>(null);
   const transport = useRef<TransportRecorder | null>(null);
@@ -138,6 +155,7 @@ export function PracticeWorkbench() {
   const settingsReturnFocus = useRef<HTMLElement | null>(null);
   const microphoneCheckAbort = useRef<AbortController | null>(null);
   const microphoneReturnFocus = useRef<HTMLElement | null>(null);
+  const coachAbort = useRef<AbortController | null>(null);
   const stopSessionRef = useRef<() => Promise<void>>(async () => undefined);
   const selectionRef = useRef({ start: 0, end: 0 });
 
@@ -152,6 +170,27 @@ export function PracticeWorkbench() {
   useEffect(() => {
     if (settingsOpen) settingsCloseButton.current?.focus();
   }, [settingsOpen]);
+
+  useEffect(() => {
+    const player = captureAudio.current;
+    if (!player) return;
+    player.pause();
+    player.removeAttribute("src");
+    if (!lastCapture) {
+      player.load();
+      return;
+    }
+    const url = URL.createObjectURL(
+      encodeMonoWav(lastCapture.alignedSamples, lastCapture.sampleRate),
+    );
+    player.src = url;
+    player.load();
+    return () => {
+      player.pause();
+      player.removeAttribute("src");
+      URL.revokeObjectURL(url);
+    };
+  }, [lastCapture]);
 
   useEffect(() => {
     if (!song || !waveformElement.current) return;
@@ -214,6 +253,8 @@ export function PracticeWorkbench() {
       recordingRef.current = false;
       microphoneCheckAbort.current?.abort();
       microphoneCheckAbort.current = null;
+      coachAbort.current?.abort();
+      coachAbort.current = null;
       void activeCapture?.stop();
     };
   }, []);
@@ -232,6 +273,13 @@ export function PracticeWorkbench() {
       });
       setAnalysis(null);
       setLastCapture(null);
+      setCaptureCurrentTime(0);
+      setCaptureIsPlaying(false);
+      setCorrectionPlaybackSource("reference");
+      coachAbort.current?.abort();
+      coachAbort.current = null;
+      setCoachLoading(false);
+      setCoachResponse(null);
       setErrorMessage(null);
       setSessionState("idle");
     },
@@ -296,22 +344,53 @@ export function PracticeWorkbench() {
     [song?.name],
   );
 
+  const completeAnalysis = useCallback(
+    async (localAnalysis: LocalAnalysis, sourceName?: string) => {
+      coachAbort.current?.abort();
+      const controller = new AbortController();
+      coachAbort.current = controller;
+      setAnalysis(localAnalysis);
+      setCoachResponse(null);
+      setCoachLoading(true);
+      let response: CoachResponse;
+      try {
+        response = await requestCoach(localAnalysis, { signal: controller.signal });
+      } catch {
+        if (controller.signal.aborted || coachAbort.current !== controller) return;
+        response = clientFallbackCoach(localAnalysis);
+      }
+      if (!mountedRef.current || controller.signal.aborted || coachAbort.current !== controller) {
+        return;
+      }
+      const coachedAnalysis = { ...localAnalysis, coachMessages: response.messages };
+      coachAbort.current = null;
+      setCoachResponse(response);
+      setCoachLoading(false);
+      setAnalysis(coachedAnalysis);
+      setSessionState("ready");
+      addHistory(coachedAnalysis, sourceName);
+    },
+    [addHistory],
+  );
+
   const runDemoAnalysis = useCallback(() => {
     const demo = createDemoAudio();
     if (!song?.isDemo) {
       setSongBlob(demo.blob, "合成练习旋律 · A3–D4", demo);
       setRightsAccepted(true);
     }
+    setLastCapture(null);
+    setCaptureCurrentTime(0);
+    setCaptureIsPlaying(false);
+    setCorrectionPlaybackSource("reference");
     setSessionState("analyzing");
     const nextAnalysis = analyzeTake(
       demo.referenceSamples,
       demo.userSamples,
       demo.sampleRate,
     );
-    setAnalysis(nextAnalysis);
-    setSessionState("ready");
-    addHistory(nextAnalysis, "合成练习旋律 · A3–D4");
-  }, [addHistory, setSongBlob, song?.isDemo]);
+    void completeAnalysis(nextAnalysis, "合成练习旋律 · A3–D4");
+  }, [completeAnalysis, setSongBlob, song?.isDemo]);
 
   const stopSession = useCallback(async () => {
     if (!recordingRef.current || !capture.current) return;
@@ -326,10 +405,29 @@ export function PracticeWorkbench() {
       waveform.current?.getCurrentTime() ?? selectionRef.current.end,
       capture.current.capturedSamples,
     );
+    let capturedAudioAvailable = false;
     try {
       const captured = await capture.current.stop();
       const points = transport.current?.snapshot() ?? [];
-      setLastCapture({ ...captured, transport: points });
+      const alignedStart = Math.min(
+        captured.samples.length,
+        Math.max(0, captureStartSampleIndex(points)),
+      );
+      const alignedSamples = captured.samples.slice(alignedStart);
+      const signal = assessCaptureSignal(alignedSamples, captured.sampleRate);
+      setLastCapture({ alignedSamples, sampleRate: captured.sampleRate, signal, transport: points });
+      capturedAudioAvailable = true;
+      setCaptureCurrentTime(0);
+      setCaptureIsPlaying(false);
+      setCorrectionPlaybackSource("capture");
+      if (signal.issue) {
+        setAnalysis(null);
+        setCoachLoading(false);
+        setCoachResponse(null);
+        setSessionState("error");
+        setErrorMessage(captureSignalErrorMessage(signal.issue));
+        return;
+      }
       if (!song) throw new Error("song source is missing");
       const decoded = await decodeAudioBlob(song.blob);
       const reference = sliceSamples(
@@ -343,25 +441,25 @@ export function PracticeWorkbench() {
         decoded.sampleRate,
         captured.sampleRate,
       );
-      const alignedUser = captured.samples.slice(
-        Math.min(captured.samples.length, captureStartSampleIndex(points)),
-      );
       const nextAnalysis = analyzeTake(
         normalizedReference,
-        alignedUser,
+        alignedSamples,
         captured.sampleRate,
       );
-      setAnalysis(nextAnalysis);
-      setSessionState("ready");
-      addHistory(nextAnalysis);
+      await completeAnalysis(nextAnalysis);
     } catch {
+      if (!capturedAudioAvailable) setLastCapture(null);
       setSessionState("error");
-      setErrorMessage("录音已停止，但本地预览分析失败。");
+      setErrorMessage(
+        capturedAudioAvailable
+          ? "麦克风录音已保留，但本地参考分析失败。"
+          : "未能读取麦克风录音，无法完成分析。请重新检查麦克风后再试。",
+      );
     } finally {
       capture.current = null;
       transport.current = null;
     }
-  }, [addHistory, song]);
+  }, [completeAnalysis, song]);
 
   useEffect(() => {
     stopSessionRef.current = stopSession;
@@ -372,6 +470,16 @@ export function PracticeWorkbench() {
     if (!song || !playback || !rightsAccepted || selectionEnd - selectionStart < 0.5) return;
     playback.pause();
     playback.setTime(selectionStart);
+    captureAudio.current?.pause();
+    capturePlaybackEnd.current = null;
+    coachAbort.current?.abort();
+    coachAbort.current = null;
+    setCaptureCurrentTime(0);
+    setCaptureIsPlaying(false);
+    setLastCapture(null);
+    setAnalysis(null);
+    setCoachLoading(false);
+    setCoachResponse(null);
     setErrorMessage(null);
     setSessionState("arming");
     const nextCapture = new MicrophoneCapture();
@@ -414,6 +522,8 @@ export function PracticeWorkbench() {
       if (!mountedRef.current) return;
       writeMicrophoneCheckSkipped(false);
       setMicrophoneCheckSkipped(false);
+      setCoachLoading(false);
+      setCoachResponse(null);
       setSessionState("error");
       setErrorMessage("无法使用麦克风。请允许浏览器访问麦克风后重试。");
       capture.current = null;
@@ -512,11 +622,94 @@ export function PracticeWorkbench() {
     setMicrophoneCheckSkipped(false);
   }, []);
 
+  const pauseCapturePlayback = useCallback(() => {
+    captureAudio.current?.pause();
+    capturePlaybackEnd.current = null;
+  }, []);
+
+  const playCaptureRange = useCallback(
+    (startSeconds: number, endSeconds: number) => {
+      const player = captureAudio.current;
+      if (!player || !lastCapture) return;
+      const durationSeconds = lastCapture.alignedSamples.length / lastCapture.sampleRate;
+      const start = Math.max(0, Math.min(startSeconds, durationSeconds));
+      const end = Math.max(start, Math.min(endSeconds, durationSeconds));
+      if (end - start < 0.05) {
+        setErrorMessage("该纠错区间没有足够的录音可供试听。");
+        return;
+      }
+      waveform.current?.pause();
+      player.pause();
+      player.currentTime = start;
+      setCaptureCurrentTime(start);
+      capturePlaybackEnd.current = end;
+      void player.play().catch(() => {
+        capturePlaybackEnd.current = null;
+        setErrorMessage("浏览器无法播放麦克风录音，请下载 WAV 后检查。");
+      });
+    },
+    [lastCapture],
+  );
+
+  const toggleCapturePlayback = useCallback(() => {
+    const player = captureAudio.current;
+    if (!player || !lastCapture) return;
+    if (!player.paused) {
+      pauseCapturePlayback();
+      return;
+    }
+    const durationSeconds = lastCapture.alignedSamples.length / lastCapture.sampleRate;
+    const start = player.currentTime >= durationSeconds - 0.05 ? 0 : player.currentTime;
+    playCaptureRange(start, durationSeconds);
+  }, [lastCapture, pauseCapturePlayback, playCaptureRange]);
+
+  const seekCapturePlayback = useCallback((nextTime: number) => {
+    const player = captureAudio.current;
+    if (!player) return;
+    player.currentTime = nextTime;
+    capturePlaybackEnd.current = null;
+    setCaptureCurrentTime(nextTime);
+  }, []);
+
+  const onCaptureTimeUpdate = useCallback(() => {
+    const player = captureAudio.current;
+    if (!player) return;
+    const end = capturePlaybackEnd.current;
+    if (end !== null && player.currentTime >= end - 0.01) {
+      player.pause();
+      player.currentTime = end;
+      capturePlaybackEnd.current = null;
+    }
+    setCaptureCurrentTime(player.currentTime);
+  }, []);
+
+  const playCorrection = useCallback(
+    (correction: LocalCorrection) => {
+      if (correctionPlaybackSource === "capture" && lastCapture) {
+        playCaptureRange(correction.startSeconds, correction.endSeconds);
+        return;
+      }
+      pauseCapturePlayback();
+      const start = selectionStart + correction.startSeconds;
+      const end = Math.min(selectionEnd, selectionStart + correction.endSeconds);
+      if (end - start >= 0.05) void waveform.current?.play(start, end);
+    },
+    [
+      correctionPlaybackSource,
+      lastCapture,
+      pauseCapturePlayback,
+      playCaptureRange,
+      selectionEnd,
+      selectionStart,
+    ],
+  );
+
   const togglePlayback = useCallback(() => {
     if (!waveform.current || sessionState === "recording") return;
+    pauseCapturePlayback();
     if (!isPlaying && currentTime >= selectionEnd) waveform.current.setTime(selectionStart);
     void waveform.current.playPause();
-  }, [currentTime, isPlaying, selectionEnd, selectionStart, sessionState]);
+  }, [currentTime, isPlaying, pauseCapturePlayback, selectionEnd, selectionStart, sessionState]);
 
   const resetPlayback = useCallback(() => {
     waveform.current?.pause();
@@ -525,7 +718,7 @@ export function PracticeWorkbench() {
 
   const downloadCapture = useCallback(() => {
     if (!lastCapture) return;
-    const blob = encodeMonoWav(lastCapture.samples, lastCapture.sampleRate);
+    const blob = encodeMonoWav(lastCapture.alignedSamples, lastCapture.sampleRate);
     downloadBlob(blob, `music-ai-take-${Date.now()}.wav`);
   }, [lastCapture]);
 
@@ -591,6 +784,15 @@ export function PracticeWorkbench() {
 
   const status = sessionStatus(sessionState);
   const selectedDuration = Math.max(0, selectionEnd - selectionStart);
+  const captureDuration = lastCapture
+    ? lastCapture.alignedSamples.length / lastCapture.sampleRate
+    : 0;
+  const activeCorrectionPlaybackSource = lastCapture ? correctionPlaybackSource : "reference";
+  const coachProviderLabel = coachLoading
+    ? "AI CONNECTING"
+    : coachResponse?.usedFallback
+      ? "RULE FALLBACK"
+      : coachResponse?.model?.toUpperCase() ?? "EVIDENCE";
   const overlayLeft = duration > 0 ? (selectionStart / duration) * 100 : 0;
   const overlayWidth = duration > 0 ? (selectedDuration / duration) * 100 : 0;
   const sourceLocked =
@@ -601,6 +803,19 @@ export function PracticeWorkbench() {
 
   return (
     <div className="app-shell">
+      <audio
+        ref={captureAudio}
+        preload="metadata"
+        hidden
+        onPlay={() => setCaptureIsPlaying(true)}
+        onPause={() => setCaptureIsPlaying(false)}
+        onEnded={() => {
+          capturePlaybackEnd.current = null;
+          setCaptureIsPlaying(false);
+          setCaptureCurrentTime(captureDuration);
+        }}
+        onTimeUpdate={onCaptureTimeUpdate}
+      />
       <aside className="side-rail" aria-label="主导航">
         <button className="brand-mark" title="声准" onClick={() => setView("practice")}>
           <AudioLines size={25} strokeWidth={2.2} />
@@ -823,14 +1038,16 @@ export function PracticeWorkbench() {
                 <span>我有权使用该音频进行个人练习</span>
               </label>
               <div className="session-actions">
-                <button
-                  className="button secondary"
-                  disabled={sourceLocked}
-                  onClick={runDemoAnalysis}
-                >
-                  <Sparkles size={17} />
-                  运行示例评估
-                </button>
+                {(!song || song.isDemo) && (
+                  <button
+                    className="button secondary"
+                    disabled={sourceLocked}
+                    onClick={runDemoAnalysis}
+                  >
+                    <Sparkles size={17} />
+                    运行示例评估
+                  </button>
+                )}
                 {sessionState === "recording" ? (
                   <button className="button danger" onClick={() => void stopSession()}>
                     <Square size={16} fill="currentColor" />
@@ -863,7 +1080,40 @@ export function PracticeWorkbench() {
                     <h2>纠错事件</h2>
                   </div>
                   {analysis && (
-                    <span className="result-count">{analysis.corrections.length} 项</span>
+                    <div className="correction-heading-tools">
+                      <div
+                        className="playback-source-control"
+                        role="radiogroup"
+                        aria-label="纠错区间回放来源"
+                      >
+                        <button
+                          role="radio"
+                          aria-checked={activeCorrectionPlaybackSource === "capture"}
+                          className={
+                            activeCorrectionPlaybackSource === "capture" ? "active" : ""
+                          }
+                          disabled={!lastCapture}
+                          title="播放我的录音区间"
+                          onClick={() => setCorrectionPlaybackSource("capture")}
+                        >
+                          <Mic size={14} />
+                          我的录音
+                        </button>
+                        <button
+                          role="radio"
+                          aria-checked={activeCorrectionPlaybackSource === "reference"}
+                          className={
+                            activeCorrectionPlaybackSource === "reference" ? "active" : ""
+                          }
+                          title="播放原曲区间"
+                          onClick={() => setCorrectionPlaybackSource("reference")}
+                        >
+                          <Music2 size={14} />
+                          原曲
+                        </button>
+                      </div>
+                      <span className="result-count">{analysis.corrections.length} 项</span>
+                    </div>
                   )}
                 </div>
                 {analysis ? (
@@ -881,12 +1131,15 @@ export function PracticeWorkbench() {
                           </div>
                           <button
                             className="icon-button"
-                            title="播放该区间"
-                            aria-label={`播放 ${item.label} 区间`}
-                            onClick={() => {
-                              waveform.current?.setTime(selectionStart + item.startSeconds);
-                              void waveform.current?.play();
-                            }}
+                            title={
+                              activeCorrectionPlaybackSource === "capture"
+                                ? "播放我的录音区间"
+                                : "播放原曲区间"
+                            }
+                            aria-label={`播放${
+                              activeCorrectionPlaybackSource === "capture" ? "我的录音" : "原曲"
+                            }中的 ${item.label} 区间`}
+                            onClick={() => playCorrection(item)}
                           >
                             <Play size={16} />
                           </button>
@@ -911,25 +1164,42 @@ export function PracticeWorkbench() {
               <div className="coach-panel">
                 <div className="section-heading">
                   <div>
-                    <span className="section-label">COACH / RULE FALLBACK</span>
+                    <span className="section-label">COACH / {coachProviderLabel}</span>
                     <h2>练习建议</h2>
                   </div>
-                  <SlidersHorizontal size={19} />
+                  {coachLoading ? (
+                    <Activity className="coach-loading-icon" size={19} />
+                  ) : (
+                    <SlidersHorizontal size={19} />
+                  )}
                 </div>
-                {analysis ? (
-                  <div className="coach-list">
-                    {analysis.coachMessages.map((message, index) => (
-                      <div className="coach-message" key={`${message}-${index}`}>
-                        <span>{index + 1}</span>
-                        <p>{message}</p>
-                      </div>
-                    ))}
+                {coachLoading ? (
+                  <div className="result-empty">
+                    <Activity size={28} />
+                    <strong>AI 正在生成练习建议</strong>
+                    <span>只发送测量值和纠错类型，不上传录音。</span>
                   </div>
+                ) : analysis ? (
+                  <>
+                    <div className="coach-list">
+                      {analysis.coachMessages.map((message, index) => (
+                        <div className="coach-message" key={`${message}-${index}`}>
+                          <span>{index + 1}</span>
+                          <p>{message}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {coachResponse?.usedFallback && (
+                      <p className="coach-fallback-note">
+                        {coachFallbackMessage(coachResponse.fallbackReason)}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <div className="result-empty">
                     <Volume2 size={28} />
                     <strong>建议由结构化证据生成</strong>
-                    <span>本地预览不会调用外部大模型</span>
+                    <span>本地完成测量，服务端大模型只生成练习建议。</span>
                   </div>
                 )}
               </div>
@@ -962,6 +1232,35 @@ export function PracticeWorkbench() {
                   label="证据置信"
                   value={analysis ? `${Math.round(analysis.confidence * 100)}%` : "—"}
                 />
+                <Metric
+                  icon={<Mic size={17} />}
+                  label="录音电平"
+                  value={captureDbfs(lastCapture?.signal.rmsDbfs)}
+                />
+                {lastCapture && (
+                  <div className="capture-player" aria-label="我的录音播放器">
+                    <button
+                      className="capture-play-button"
+                      title={captureIsPlaying ? "暂停我的录音" : "播放我的录音"}
+                      aria-label={captureIsPlaying ? "暂停我的录音" : "播放我的录音"}
+                      onClick={toggleCapturePlayback}
+                    >
+                      {captureIsPlaying ? <Pause size={17} /> : <Play size={17} fill="currentColor" />}
+                    </button>
+                    <input
+                      type="range"
+                      aria-label="我的录音播放位置"
+                      min={0}
+                      max={Math.max(captureDuration, 0.01)}
+                      step={0.01}
+                      value={Math.min(captureCurrentTime, captureDuration)}
+                      onChange={(event) => seekCapturePlayback(Number(event.target.value))}
+                    />
+                    <span>
+                      {formatTime(captureCurrentTime)} / {formatTime(captureDuration)}
+                    </span>
+                  </div>
+                )}
                 <div className="evidence-actions">
                   <button
                     className="icon-text-button"
@@ -1037,9 +1336,9 @@ export function PracticeWorkbench() {
             <div className="setting-row">
               <div>
                 <strong>分析模式</strong>
-                <span>浏览器本地预览</span>
+                <span>浏览器测量 + 服务端 AI 建议</span>
               </div>
-              <span className="setting-value">LOCAL</span>
+              <span className="setting-value">HYBRID</span>
             </div>
             <div className="setting-row">
               <div>
@@ -1172,6 +1471,30 @@ function metricValue(value: number | null | undefined, unit: string): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   const prefix = value > 0 ? "+" : "";
   return `${prefix}${Math.round(value)} ${unit}`;
+}
+
+function captureDbfs(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  return `${Math.round(value)} dBFS`;
+}
+
+function coachFallbackMessage(reason: CoachResponse["fallbackReason"]): string {
+  switch (reason) {
+    case "not_configured":
+      return "大模型尚未配置，本次使用规则建议。";
+    case "configuration_error":
+      return "大模型配置无效，本次使用规则建议。";
+    case "provider_unavailable":
+      return "大模型服务暂时不可用，本次使用规则建议。";
+    case "invalid_response":
+      return "大模型输出未通过证据校验，本次使用规则建议。";
+    case "rate_limited":
+      return "大模型请求过于频繁，本次使用规则建议。";
+    case "client_unavailable":
+      return "无法连接 AI 教练接口，本次使用规则建议。";
+    case null:
+      return "本次使用规则建议。";
+  }
 }
 
 function downloadBlob(blob: Blob, filename: string): void {

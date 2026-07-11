@@ -7,6 +7,9 @@ x-control-plane: &control-plane
     dockerfile: deploy/Dockerfile.control-plane
   environment: &control-plane-environment
     MUSIC_AI_AUTO_CREATE_SCHEMA: "false"
+    MUSIC_AI_COACH_API_KEY_FILE: /run/secrets/coach_api_key
+    MUSIC_AI_COACH_BASE_URL: ${MUSIC_AI_COACH_BASE_URL:-https://api.openai.com/v1}
+    MUSIC_AI_COACH_MODEL: ${MUSIC_AI_COACH_MODEL:-gpt-5.4}
     MUSIC_AI_DATABASE_HOST: postgres
     MUSIC_AI_DATABASE_NAME: music_ai
     MUSIC_AI_DATABASE_PASSWORD_FILE: /run/secrets/database_password
@@ -18,6 +21,7 @@ x-control-plane: &control-plane
     MUSIC_AI_RAW_AUDIO_TTL_SECONDS: ${MUSIC_AI_RAW_AUDIO_TTL_SECONDS:-900}
     MUSIC_AI_TOKEN_PEPPER_FILE: /run/secrets/token_pepper
   secrets:
+    - coach_api_key
     - database_password
     - token_pepper
   networks:
@@ -90,6 +94,12 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
+    environment:
+      MUSIC_AI_COACH_API_KEY_FILE: /run/secrets/coach_api_key
+      MUSIC_AI_COACH_BASE_URL: ${MUSIC_AI_COACH_BASE_URL:-https://api.openai.com/v1}
+      MUSIC_AI_COACH_MODEL: ${MUSIC_AI_COACH_MODEL:-gpt-5.4}
+    secrets:
+      - coach_api_key
     networks:
       - edge
     healthcheck:
@@ -146,6 +156,8 @@ volumes:
   postgres-data: {}
 
 secrets:
+  coach_api_key:
+    file: ${MUSIC_AI_COACH_API_KEY_FILE:?set MUSIC_AI_COACH_API_KEY_FILE}
   database_password:
     file: ${MUSIC_AI_DATABASE_PASSWORD_FILE:?set MUSIC_AI_DATABASE_PASSWORD_FILE}
   token_pepper:

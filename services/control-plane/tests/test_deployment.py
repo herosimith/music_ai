@@ -51,6 +51,7 @@ def test_deployment_secrets_are_required_files_and_registry_stays_fail_closed() 
 
     assert "${MUSIC_AI_DATABASE_PASSWORD_FILE:?" in compose_text
     assert "${MUSIC_AI_TOKEN_PEPPER_FILE:?" in compose_text
+    assert "${MUSIC_AI_COACH_API_KEY_FILE:?" in compose_text
     assert "POSTGRES_PASSWORD=" not in compose_text
     assert "MUSIC_AI_TOKEN_PEPPER:" not in compose_text
     assert "<immutable-release-tag>" in environment
@@ -73,6 +74,9 @@ def test_container_builds_are_non_root_and_copy_standalone_assets() -> None:
     assert "USER musicai" in control_plane
     assert "chown -R musicai:musicai /data" in control_plane
     assert "handle_path /api/*" in caddy
+    assert "handle /api/coach" in caddy
+    assert "X-Music-AI-Client-IP {http.request.remote.host}" in caddy
+    assert "reverse_proxy web:3000" in caddy
     assert "reverse_proxy control-plane:8000" in caddy
     assert "reverse_proxy web:3000" in caddy
     assert "max_size 100MB" in caddy

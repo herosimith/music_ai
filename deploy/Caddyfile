@@ -5,6 +5,12 @@
 		max_size 100MB
 	}
 
+	handle /api/coach {
+		reverse_proxy web:3000 {
+			header_up X-Music-AI-Client-IP {http.request.remote.host}
+		}
+	}
+
 	handle_path /api/* {
 		reverse_proxy control-plane:8000
 	}

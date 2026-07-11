@@ -51,7 +51,9 @@ pnpm --filter @music-ai/web dev
 The first screen supports local audio files, including locally classified `.mgg` inputs, a
 synthetic demo, waveform range selection,
 AudioWorklet microphone capture, Pitchy-based preview corrections, session history, and
-WAV/transport downloads. Browser results are explicitly a local preview; authoritative
+aligned recording playback, correction-range source switching, WAV/transport downloads, and a
+same-origin AI coach are included. The AI route receives bounded measurement evidence only; raw
+audio stays in the browser. Browser results are explicitly a local preview; authoritative
 server scoring remains confidence-gated by the model registry and scoring service. A genuine Ogg
 stream with an MGG extension is normalized locally and accepted. MusicEx/QTag/STag encrypted
 containers are rejected before storage with export guidance; the application never extracts
@@ -63,10 +65,10 @@ on the user's Mac; it is never linked into or run by the Web/server applications
 including the required explicit authorized-use confirmation, are documented in the companion
 README. The validated Ogg is then selected through the ordinary audio picker.
 
-The control plane can call an OpenAI-compatible Responses API for constrained, schema-validated
-coaching over immutable `ScoreV1` evidence. Configure `MUSIC_AI_COACH_BASE_URL`,
-`MUSIC_AI_COACH_MODEL`, and `MUSIC_AI_COACH_API_KEY` together; without them the deterministic rule
-provider remains active.
+The Web coach route and control plane can call an OpenAI-compatible Responses API for constrained,
+schema-validated coaching. Configure `MUSIC_AI_COACH_BASE_URL`, `MUSIC_AI_COACH_MODEL`, and either
+`MUSIC_AI_COACH_API_KEY` or `MUSIC_AI_COACH_API_KEY_FILE`; without them, or whenever the provider
+fails validation, the UI explicitly reports and uses the deterministic rule fallback.
 
 Production container manifests are documented in `docs/deployment.md`. They deploy the Web,
 control-plane, PostgreSQL, retention maintenance, and HTTPS gateway; model-backed workers remain

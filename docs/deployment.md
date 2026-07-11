@@ -2,8 +2,9 @@
 
 This deployment runs the browser-local practice workbench, PostgreSQL, the control plane, global
 retention maintenance, and a same-origin HTTPS gateway. It does **not** run authoritative ingest,
-scoring, or LLM coaching: those modules intentionally have no production daemon or approved model
-entry in `models/registry/models.json` yet.
+or scoring: those modules intentionally have no production daemon or approved model entry in
+`models/registry/models.json` yet. The Web server may call a configured LLM for non-authoritative,
+evidence-bound practice suggestions; it never uploads raw recording audio to that provider.
 
 ## Prerequisites
 
@@ -11,6 +12,7 @@ entry in `models/registry/models.json` yet.
 - A DNS name whose A/AAAA record points at the server
 - Inbound TCP 80/443 and UDP 443 allowed
 - Outbound access for Caddy to obtain TLS certificates
+- Outbound HTTPS access from Web/control-plane to the configured coach provider
 
 Microphone capture requires HTTPS on a real host. For local-only testing, browsers treat
 `http://localhost` as a secure context.
@@ -25,12 +27,13 @@ chmod 700 deploy/secrets
 umask 077
 openssl rand -base64 48 > deploy/secrets/database_password
 openssl rand -base64 48 > deploy/secrets/token_pepper
+install -m 600 /path/to/provider-api-key deploy/secrets/coach_api_key
 cp deploy/.env.production.example deploy/.env.production
 ```
 
 Edit `deploy/.env.production` and replace both angle-bracket placeholders. Use an immutable image
 tag and a hostname such as `practice.example.com`. Never commit `deploy/.env.production` or files
-under `deploy/secrets/`.
+under `deploy/secrets/`. Set the coach base URL and model to values supported by that provider.
 
 ## Build And Start
 
