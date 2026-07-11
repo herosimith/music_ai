@@ -37,6 +37,7 @@ uv run --package music-ai-scoring pytest packages/scoring-core/tests
 uv run --package music-ai-control-plane pytest services/control-plane/tests
 uv run --package music-ai-ingest pytest services/ingest-worker/tests
 uv run --package music-ai-scoring-service pytest services/scoring/tests
+uv run --package music-ai-coach pytest services/coach/tests
 pnpm test
 pnpm build
 ```

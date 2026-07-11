@@ -433,7 +433,7 @@ class TransposeArguments(ContractModel):
 
 
 class ReferenceToneArguments(ContractModel):
-    f0_hz: PositiveHertz
+    f0_hz: Annotated[float, Field(ge=55.0, le=1_100.0, allow_inf_nan=False)]
     duration_ms: Annotated[int, Field(ge=100, le=5_000)]
 
 
@@ -457,11 +457,21 @@ class CoachActionBase(ContractModel):
     action_id: UUID
     session_id: UUID
     phrase_id: UUID
+    source_score_sha256: Sha256
     source_correction_ids: list[UUID] = Field(default_factory=list, max_length=100)
     message: Annotated[str, StringConstraints(min_length=1, max_length=1_000)]
+    locale: Literal["zh-CN", "en"]
     provider: Annotated[str, StringConstraints(min_length=1, max_length=80)]
+    coach_version: VersionName
     score_version: VersionName
     produced_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def validate_source_corrections(self) -> CoachActionBase:
+        identities = [str(correction_id) for correction_id in self.source_correction_ids]
+        if identities != sorted(set(identities)):
+            raise ValueError("source correction IDs must be unique and sorted")
+        return self
 
 
 class LoopCoachAction(CoachActionBase):

@@ -18,6 +18,7 @@ members = [
     "packages/contracts/python",
     "packages/model-runtime",
     "packages/scoring-core",
+    "services/coach",
     "services/control-plane",
     "services/ingest-worker",
     "services/scoring",
@@ -28,6 +29,7 @@ addopts = "-ra --import-mode=importlib"
 pythonpath = [
     "packages/scoring-core/tests",
     "services/control-plane/tests",
+    "services/coach/tests",
     "services/ingest-worker/tests",
     "services/scoring/tests",
 ]

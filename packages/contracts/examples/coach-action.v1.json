@@ -4,6 +4,7 @@
   "action_id": "66666666-6666-4666-8666-666666666666",
   "session_id": "22222222-2222-4222-8222-222222222222",
   "phrase_id": "33333333-3333-4333-8333-333333333333",
+  "source_score_sha256": "6192caa8240a5e2ca5dd0e9edf74404bd0008bc5afbac21fb82c4da23f4164ce",
   "action_type": "loop",
   "source_correction_ids": ["55555555-5555-4555-8555-555555555555"],
   "message": "Repeat this phrase and keep the pitch center slightly higher.",
@@ -12,7 +13,9 @@
     "end_sample": 912000,
     "repetitions": 3
   },
+  "locale": "en",
   "provider": "rules.v1",
+  "coach_version": "coach.v1",
   "score_version": "score.v1",
   "produced_at": "2026-07-11T04:00:09Z"
 }

@@ -36,6 +36,20 @@
         "arguments": {
           "$ref": "#/$defs/CompareTakeArguments"
         },
+        "coach_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Coach Version",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
         "message": {
           "maxLength": 1000,
           "minLength": 1,
@@ -83,6 +97,11 @@
           "title": "Source Correction Ids",
           "type": "array"
         },
+        "source_score_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Score Sha256",
+          "type": "string"
+        },
         "tenant_id": {
           "format": "uuid",
           "title": "Tenant Id",
@@ -95,8 +114,11 @@
         "action_id",
         "session_id",
         "phrase_id",
+        "source_score_sha256",
         "message",
+        "locale",
         "provider",
+        "coach_version",
         "score_version",
         "produced_at",
         "action_type",
@@ -149,6 +171,20 @@
         "arguments": {
           "$ref": "#/$defs/LoopArguments"
         },
+        "coach_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Coach Version",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
         "message": {
           "maxLength": 1000,
           "minLength": 1,
@@ -196,6 +232,11 @@
           "title": "Source Correction Ids",
           "type": "array"
         },
+        "source_score_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Score Sha256",
+          "type": "string"
+        },
         "tenant_id": {
           "format": "uuid",
           "title": "Tenant Id",
@@ -208,8 +249,11 @@
         "action_id",
         "session_id",
         "phrase_id",
+        "source_score_sha256",
         "message",
+        "locale",
         "provider",
+        "coach_version",
         "score_version",
         "produced_at",
         "action_type",
@@ -228,8 +272,8 @@
           "type": "integer"
         },
         "f0_hz": {
-          "exclusiveMinimum": 0.0,
-          "maximum": 20000.0,
+          "maximum": 1100.0,
+          "minimum": 55.0,
           "title": "F0 Hz",
           "type": "number"
         }
@@ -257,6 +301,20 @@
         "arguments": {
           "$ref": "#/$defs/ReferenceToneArguments"
         },
+        "coach_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Coach Version",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
         "message": {
           "maxLength": 1000,
           "minLength": 1,
@@ -304,6 +362,11 @@
           "title": "Source Correction Ids",
           "type": "array"
         },
+        "source_score_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Score Sha256",
+          "type": "string"
+        },
         "tenant_id": {
           "format": "uuid",
           "title": "Tenant Id",
@@ -316,8 +379,11 @@
         "action_id",
         "session_id",
         "phrase_id",
+        "source_score_sha256",
         "message",
+        "locale",
         "provider",
+        "coach_version",
         "score_version",
         "produced_at",
         "action_type",
@@ -370,6 +436,20 @@
         "arguments": {
           "$ref": "#/$defs/SlowArguments"
         },
+        "coach_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Coach Version",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
         "message": {
           "maxLength": 1000,
           "minLength": 1,
@@ -417,6 +497,11 @@
           "title": "Source Correction Ids",
           "type": "array"
         },
+        "source_score_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Score Sha256",
+          "type": "string"
+        },
         "tenant_id": {
           "format": "uuid",
           "title": "Tenant Id",
@@ -429,8 +514,11 @@
         "action_id",
         "session_id",
         "phrase_id",
+        "source_score_sha256",
         "message",
+        "locale",
         "provider",
+        "coach_version",
         "score_version",
         "produced_at",
         "action_type",
@@ -461,6 +549,20 @@
         "arguments": {
           "$ref": "#/$defs/TextArguments"
         },
+        "coach_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Coach Version",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
         "message": {
           "maxLength": 1000,
           "minLength": 1,
@@ -508,6 +610,11 @@
           "title": "Source Correction Ids",
           "type": "array"
         },
+        "source_score_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Score Sha256",
+          "type": "string"
+        },
         "tenant_id": {
           "format": "uuid",
           "title": "Tenant Id",
@@ -520,8 +627,11 @@
         "action_id",
         "session_id",
         "phrase_id",
+        "source_score_sha256",
         "message",
+        "locale",
         "provider",
+        "coach_version",
         "score_version",
         "produced_at",
         "action_type",
@@ -562,6 +672,20 @@
         "arguments": {
           "$ref": "#/$defs/TransposeArguments"
         },
+        "coach_version": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Coach Version",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
         "message": {
           "maxLength": 1000,
           "minLength": 1,
@@ -609,6 +733,11 @@
           "title": "Source Correction Ids",
           "type": "array"
         },
+        "source_score_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Score Sha256",
+          "type": "string"
+        },
         "tenant_id": {
           "format": "uuid",
           "title": "Tenant Id",
@@ -621,8 +750,11 @@
         "action_id",
         "session_id",
         "phrase_id",
+        "source_score_sha256",
         "message",
+        "locale",
         "provider",
+        "coach_version",
         "score_version",
         "produced_at",
         "action_type",

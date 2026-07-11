@@ -27,6 +27,7 @@ jobs:
       - run: uv run --package music-ai-control-plane pytest services/control-plane/tests
       - run: uv run --package music-ai-ingest pytest services/ingest-worker/tests
       - run: uv run --package music-ai-scoring-service pytest services/scoring/tests
+      - run: uv run --package music-ai-coach pytest services/coach/tests
 
   typescript:
     runs-on: ubuntu-latest

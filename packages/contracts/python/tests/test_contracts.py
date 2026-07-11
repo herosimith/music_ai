@@ -236,6 +236,32 @@ def test_coach_action_arguments_match_discriminator() -> None:
         CoachActionV1.model_validate(data)
 
 
+def test_coach_action_rejects_unsafe_reference_tone_and_duplicate_sources() -> None:
+    data = _example("coach-action.v1")
+    data["action_type"] = "reference_tone"
+    data["arguments"] = {"f0_hz": 20_000, "duration_ms": 800}
+    with pytest.raises(ValidationError):
+        CoachActionV1.model_validate(data)
+
+    data = _example("coach-action.v1")
+    data["source_correction_ids"] *= 2
+    with pytest.raises(ValidationError, match="unique and sorted"):
+        CoachActionV1.model_validate(data)
+
+
+def test_coach_example_binds_the_exact_score_example() -> None:
+    score = ScoreV1.model_validate(_example("score.v1"))
+    action = CoachActionV1.model_validate(_example("coach-action.v1")).root
+    known_corrections = {correction.correction_id for correction in score.corrections}
+
+    assert action.source_score_sha256 == _canonical_digest(score)
+    assert set(action.source_correction_ids) <= known_corrections
+    assert action.tenant_id == score.tenant_id
+    assert action.session_id == score.session_id
+    assert action.phrase_id == score.phrase_id
+    assert action.score_version == score.versions.score_version
+
+
 def test_model_registry_schema_matches_source_and_starts_empty() -> None:
     committed_text = (REGISTRY_ROOT / "registry.schema.json").read_text(encoding="utf-8")
     assert committed_text == schema_text()
