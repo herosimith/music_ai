@@ -15,6 +15,17 @@ coverage/
 playwright-report/
 test-results/
 *.log
+*.tsbuildinfo
+
+# Keep the curated Web QA evidence without committing every exploratory capture.
+reports/web-dogfood/screenshots/*.png
+!reports/web-dogfood/screenshots/issue-001-step-1.png
+!reports/web-dogfood/screenshots/issue-001-step-2.png
+!reports/web-dogfood/screenshots/issue-001-result.png
+!reports/web-dogfood/screenshots/mobile-history.png
+!reports/web-dogfood/screenshots/mobile-history-fixed.png
+!reports/web-dogfood/screenshots/final-timing-smoke.png
+reports/web-dogfood/videos/
 
 # Audio and model artifacts never belong in Git.
 artifacts/
