@@ -567,6 +567,18 @@ class ControlPlaneService:
             )
         )
 
+    def get_score(self, tenant_id: UUID, score_id: UUID) -> ScoreRecord:
+        score = self.session.scalar(
+            select(ScoreRecord).where(
+                ScoreRecord.id == score_id,
+                ScoreRecord.tenant_id == tenant_id,
+                ScoreRecord.deleted_at.is_(None),
+            )
+        )
+        if score is None:
+            raise NotFoundError("score not found")
+        return score
+
     def request_song_deletion(
         self,
         tenant_id: UUID,

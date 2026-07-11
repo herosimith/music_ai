@@ -33,7 +33,11 @@ uv run alembic -c services/control-plane/alembic.ini check
 3. Create a practice session with the selected `manifest_record_id`.
 4. Reserve and upload a PCM/WAV phrase.
 5. The scoring service writes an immutable score with `Idempotency-Key` and `Reference-Manifest-Id` headers.
-6. Maintenance expires raw audio and processes durable deletion tasks.
+6. Request a constrained plan with `POST /v1/scores/{score_id}/coach?locale=zh-CN`.
+7. Maintenance expires raw audio and processes durable deletion tasks.
+
+The coach endpoint resolves the score inside the caller's tenant. Without LLM configuration it
+uses the rule provider; configured provider failures also fall back to the deterministic plan.
 
 ## Retention Operations
 

@@ -78,6 +78,28 @@ def test_end_to_end_score_write_is_idempotent_and_version_bound(harness: Harness
     assert listed.json()[0]["phrase_id"] == str(phrase_id)
     assert listed.json()[0]["manifest_record_id"] == str(manifest_id)
 
+    coached = harness.client.post(
+        f"/v1/scores/{first_id}/coach?locale=en",
+        headers=harness.headers(),
+    )
+    assert coached.status_code == 200
+    assert coached.json()["provider"] == "rules.v1"
+    assert coached.json()["used_fallback"] is False
+    assert coached.json()["actions"][0]["action_type"] == "text"
+    assert "No issue" in coached.json()["actions"][0]["message"]
+    repeated = harness.client.post(
+        f"/v1/scores/{first_id}/coach?locale=en",
+        headers=harness.headers(),
+    )
+    assert repeated.status_code == 200
+    assert repeated.json() == coached.json()
+
+    isolated = harness.client.post(
+        f"/v1/scores/{first_id}/coach",
+        headers=harness.headers(harness.secondary_token),
+    )
+    assert isolated.status_code == 404
+
     changed_manifest = manifest.model_copy(
         update={
             "produced_at": datetime.now(UTC),

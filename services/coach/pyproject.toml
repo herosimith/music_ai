@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Constrained rule and LLM coaching over immutable music_ai scores"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "httpx2>=2.5,<3",
     "music-ai-contracts",
     "pydantic>=2.12,<3",
 ]

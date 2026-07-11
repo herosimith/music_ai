@@ -240,12 +240,14 @@ name = "music-ai-coach"
 version = "0.1.0"
 source = { editable = "services/coach" }
 dependencies = [
+    { name = "httpx2" },
     { name = "music-ai-contracts" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx2", specifier = ">=2.5,<3" },
     { name = "music-ai-contracts", editable = "packages/contracts/python" },
     { name = "pydantic", specifier = ">=2.12,<3" },
 ]
@@ -268,6 +270,7 @@ source = { editable = "services/control-plane" }
 dependencies = [
     { name = "alembic" },
     { name = "fastapi" },
+    { name = "music-ai-coach" },
     { name = "music-ai-contracts" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
@@ -279,6 +282,7 @@ dependencies = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.16,<2" },
     { name = "fastapi", specifier = ">=0.116,<1" },
+    { name = "music-ai-coach", editable = "services/coach" },
     { name = "music-ai-contracts", editable = "packages/contracts/python" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
     { name = "pydantic-settings", specifier = ">=2.10,<3" },

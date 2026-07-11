@@ -29,6 +29,13 @@ def runtime_environment(*, require_pepper: bool) -> dict[str, str]:
         )
     if require_pepper and "MUSIC_AI_TOKEN_PEPPER" not in environment:
         environment["MUSIC_AI_TOKEN_PEPPER"] = read_secret("MUSIC_AI_TOKEN_PEPPER_FILE")
+    if (
+        "MUSIC_AI_COACH_API_KEY" not in environment
+        and "MUSIC_AI_COACH_API_KEY_FILE" in environment
+    ):
+        environment["MUSIC_AI_COACH_API_KEY"] = read_secret(
+            "MUSIC_AI_COACH_API_KEY_FILE"
+        )
     return environment
 
 

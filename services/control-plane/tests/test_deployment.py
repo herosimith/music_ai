@@ -99,17 +99,22 @@ def test_control_plane_runner_reads_encoded_runtime_secrets(tmp_path, monkeypatc
     spec.loader.exec_module(module)
     password = tmp_path / "database_password"
     pepper = tmp_path / "token_pepper"
+    coach_key = tmp_path / "coach_api_key"
     password.write_text("db:p@ss/word\n", encoding="utf-8")
     pepper.write_text("p" * 48, encoding="utf-8")
+    coach_key.write_text("coach-key-0123456789abcdef\n", encoding="utf-8")
     monkeypatch.delenv("MUSIC_AI_DATABASE_URL", raising=False)
     monkeypatch.delenv("MUSIC_AI_TOKEN_PEPPER", raising=False)
+    monkeypatch.delenv("MUSIC_AI_COACH_API_KEY", raising=False)
     monkeypatch.setenv("MUSIC_AI_DATABASE_PASSWORD_FILE", str(password))
     monkeypatch.setenv("MUSIC_AI_TOKEN_PEPPER_FILE", str(pepper))
+    monkeypatch.setenv("MUSIC_AI_COACH_API_KEY_FILE", str(coach_key))
 
     runtime = module.runtime_environment(require_pepper=True)
 
     assert "db%3Ap%40ss%2Fword" in runtime["MUSIC_AI_DATABASE_URL"]
     assert runtime["MUSIC_AI_TOKEN_PEPPER"] == "p" * 48
+    assert runtime["MUSIC_AI_COACH_API_KEY"] == "coach-key-0123456789abcdef"
     assert module.command_for(["migrate"])[1] is False
     assert module.command_for(["api"])[1] is True
     assert module.command_for(["maintenance"])[0][-1].endswith("maintenance")

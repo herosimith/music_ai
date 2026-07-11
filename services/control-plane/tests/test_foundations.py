@@ -54,6 +54,12 @@ def test_bootstrap_configuration_is_all_or_nothing() -> None:
             token_pepper=PEPPER,
             bootstrap_tenant_slug="partial",
         )
+    with pytest.raises(ValidationError, match="coach base URL"):
+        Settings(
+            environment="test",
+            token_pepper=PEPPER,
+            coach_model="gpt-test.v1",
+        )
 
 
 def test_token_digest_is_peppered_and_rejects_short_tokens() -> None:

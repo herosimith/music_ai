@@ -6,6 +6,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.16,<2",
     "fastapi>=0.116,<1",
+    "music-ai-coach",
     "music-ai-contracts",
     "psycopg[binary]>=3.2,<4",
     "pydantic-settings>=2.10,<3",
@@ -21,4 +22,5 @@ build-backend = "hatchling.build"
 packages = ["src/music_ai_control_plane"]
 
 [tool.uv.sources]
+music-ai-coach = { workspace = true }
 music-ai-contracts = { workspace = true }

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import (
@@ -15,6 +15,14 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from music_ai_coach import (
+    CoachJob,
+    CoachService,
+    CoachServiceError,
+    GatewayCoachProvider,
+    OpenAIResponsesGateway,
+)
+from music_ai_coach.types import CoachResult
 from music_ai_contracts.models import PhraseAudioV1, ScoreV1, SongManifestV1
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -59,6 +67,7 @@ bearer = HTTPBearer(auto_error=False)
 def create_app(
     settings: Settings | None = None,
     object_store: ObjectStore | None = None,
+    coach_service: CoachService | None = None,
 ) -> FastAPI:
     resolved_settings = settings or Settings()
 
@@ -71,6 +80,11 @@ def create_app(
         app.state.database = database
         app.state.object_store = store
         app.state.settings = resolved_settings
+        configured_coach, coach_gateway = _configured_coach(
+            resolved_settings,
+            coach_service,
+        )
+        app.state.coach_service = configured_coach
         if resolved_settings.bootstrap_api_token is not None:
             with database.session() as session:
                 ensure_bootstrap_credential(
@@ -83,6 +97,8 @@ def create_app(
         try:
             yield
         finally:
+            if coach_gateway is not None:
+                coach_gateway.close()
             database.dispose()
 
     app = FastAPI(
@@ -255,6 +271,23 @@ def create_app(
     ) -> list[ScoreRecordView]:
         return [_score_view(record) for record in service.list_scores(actor.tenant_id, session_id)]
 
+    @app.post("/v1/scores/{score_id}/coach", response_model=CoachResult)
+    async def coach_score(
+        score_id: UUID,
+        actor: Annotated[Actor, Depends(get_actor)],
+        service: Annotated[ControlPlaneService, Depends(get_service)],
+        coach: Annotated[CoachService, Depends(get_coach_service)],
+        locale: Literal["zh-CN", "en"] = "zh-CN",
+    ) -> CoachResult:
+        record = await run_in_threadpool(service.get_score, actor.tenant_id, score_id)
+        score = ScoreV1.model_validate(record.payload)
+        job = CoachJob(
+            score=score,
+            locale=locale,
+            produced_at=score.produced_at,
+        )
+        return await run_in_threadpool(coach.coach, job)
+
     @app.delete(
         "/v1/songs/{song_id}",
         response_model=DeletionView,
@@ -339,6 +372,10 @@ def get_service(
     )
 
 
+def get_coach_service(request: Request) -> CoachService:
+    return request.app.state.coach_service
+
+
 def _install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def handle_domain_error(request: Request, error: DomainError) -> JSONResponse:
@@ -357,6 +394,31 @@ def _install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ScopeDeniedError)
     async def handle_scope_error(request: Request, error: ScopeDeniedError) -> JSONResponse:
         return _error_response(403, "forbidden", str(error))
+
+    @app.exception_handler(CoachServiceError)
+    async def handle_coach_error(request: Request, error: CoachServiceError) -> JSONResponse:
+        return _error_response(503, "coach_unavailable", "coach service is unavailable")
+
+
+def _configured_coach(
+    settings: Settings,
+    supplied: CoachService | None,
+) -> tuple[CoachService, OpenAIResponsesGateway | None]:
+    if supplied is not None:
+        return supplied, None
+    if settings.coach_api_key is None:
+        return CoachService(), None
+    gateway = OpenAIResponsesGateway(
+        base_url=settings.coach_base_url or "",
+        api_key=settings.coach_api_key.get_secret_value(),
+        model=settings.coach_model or "",
+    )
+    provider = GatewayCoachProvider(
+        "llm.responses.v1",
+        gateway,
+        timeout_seconds=settings.coach_timeout_seconds,
+    )
+    return CoachService(primary_provider=provider), gateway
 
 
 def _error_response(

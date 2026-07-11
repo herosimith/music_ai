@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     bootstrap_tenant_slug: str | None = Field(default=None, pattern=r"^[a-z0-9-]{2,63}$")
     bootstrap_tenant_name: str | None = Field(default=None, min_length=1, max_length=200)
     bootstrap_api_token: SecretStr | None = Field(default=None, min_length=32)
+    coach_base_url: str | None = None
+    coach_model: str | None = Field(default=None, min_length=1, max_length=200)
+    coach_api_key: SecretStr | None = Field(default=None, min_length=20, max_length=2_048)
+    coach_timeout_seconds: float = Field(default=10.0, ge=0.1, le=30.0)
 
     @model_validator(mode="after")
     def validate_environment_safety(self) -> Settings:
@@ -41,6 +45,11 @@ class Settings(BaseSettings):
             value is not None for value in bootstrap_values
         ):
             raise ValueError("bootstrap tenant slug, name, and token must be configured together")
+        coach_values = (self.coach_base_url, self.coach_model, self.coach_api_key)
+        if any(value is not None for value in coach_values) and not all(
+            value is not None for value in coach_values
+        ):
+            raise ValueError("coach base URL, model, and API key must be configured together")
         if self.environment == "production":
             if self.auto_create_schema:
                 raise ValueError("production must use migrations instead of auto_create_schema")
