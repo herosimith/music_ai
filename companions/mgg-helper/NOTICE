@@ -1,0 +1,14 @@
+music-ai-mgg-helper is an independent GPL-3.0-only companion program.
+
+Its MusicEx parsing, QQ Music credential discovery, GetEVkey request shape,
+and QMC2 cipher implementation are derived from ownlight6/qmc-decoder v1.2.0:
+
+  https://github.com/ownlight6/qmc-decoder
+  commit 2833286132aa152cc123cc67c550c1df6e872973
+
+Copyright (C) 2026 ownlight6
+
+music_ai changes narrow the program to an explicit macOS-only, single-file
+workflow and add secret zeroization, bounded network/file input, secure file
+handling, atomic output, and structural Ogg Vorbis validation. See LICENSE for
+the complete GPL-3.0-only terms.

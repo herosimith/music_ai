@@ -24,6 +24,7 @@ describe("MGG intake", () => {
     expect(result).toEqual({ type: "key_unavailable", mediaName: "fixture-track.mgg" });
     if (result.type !== "plain_ogg") {
       expect(mggIssueMessage(result)).toContain("不会读取账号或设备密钥");
+      expect(mggIssueMessage(result)).toContain("macOS 本机转换器");
     }
   });
 

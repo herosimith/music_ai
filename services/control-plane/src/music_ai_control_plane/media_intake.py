@@ -15,3 +15,9 @@ def detect_unsupported_encrypted_audio(payload: bytes) -> EncryptedAudioKind | N
     if tail.endswith((b"QTag", b"STag")):
         return EncryptedAudioKind.QMC_LEGACY
     return None
+
+
+def has_declared_container_magic(payload: bytes, media_type: str | None) -> bool:
+    if media_type == "audio/ogg":
+        return payload.startswith(b"OggS")
+    return True

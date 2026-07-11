@@ -444,6 +444,33 @@ def test_encrypted_mgg_is_rejected_before_object_storage(
     assert song.json()["state"] == "pending_upload"
 
 
+def test_opaque_payload_declared_as_ogg_is_rejected_before_storage(harness: Harness) -> None:
+    payload = b"not-an-ogg-container"
+    digest = hashlib.sha256(payload).hexdigest()
+    response = harness.client.post(
+        "/v1/songs",
+        headers=harness.headers(),
+        json={
+            "display_name": "Opaque Ogg source",
+            "rights_basis": "Synthetic test fixture",
+            "source_sha256": digest,
+            "source_byte_length": len(payload),
+            "source_media_type": "audio/ogg",
+        },
+    )
+    assert response.status_code == 200
+
+    response = harness.client.put(
+        f"/v1/songs/{response.json()['id']}/content",
+        headers={**harness.headers(), "Content-Type": "audio/ogg"},
+        content=payload,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "media.invalid_container"
+    assert harness.store.objects == {}
+
+
 def test_raw_audio_ttl_removes_object_but_preserves_derived_score(harness: Harness) -> None:
     song_id, _, manifest_id = create_ready_song(harness)
     session_id, phrase_id, score, idempotency_key = create_phrase_and_score(

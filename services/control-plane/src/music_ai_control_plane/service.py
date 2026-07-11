@@ -16,6 +16,7 @@ from music_ai_control_plane.database import utc_now
 from music_ai_control_plane.media_intake import (
     EncryptedAudioKind,
     detect_unsupported_encrypted_audio,
+    has_declared_container_magic,
 )
 from music_ai_control_plane.models import (
     AudioState,
@@ -57,6 +58,10 @@ class MggKeyUnavailableError(InvalidRequestError):
 
 class MggEncryptedUnsupportedError(InvalidRequestError):
     code = "mgg.encrypted_unsupported"
+
+
+class InvalidAudioContainerError(InvalidRequestError):
+    code = "media.invalid_container"
 
 
 class ControlPlaneService:
@@ -143,6 +148,10 @@ class ControlPlaneService:
         if encrypted_kind == EncryptedAudioKind.QMC_LEGACY:
             raise MggEncryptedUnsupportedError(
                 "legacy encrypted MGG audio requires an authorized client export"
+            )
+        if not has_declared_container_magic(payload, song.source_media_type):
+            raise InvalidAudioContainerError(
+                "uploaded audio does not match its declared container"
             )
         if song.source_object_key is None:
             raise InvalidRequestError("song source storage key is missing")

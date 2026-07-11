@@ -19,6 +19,7 @@ playwright-report/
 test-results/
 *.log
 *.tsbuildinfo
+target/
 
 # Keep the curated Web QA evidence without committing every exploratory capture.
 reports/web-dogfood/screenshots/*.png

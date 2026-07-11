@@ -41,7 +41,8 @@ export function mggIssueMessage(classification: Exclude<MggClassification, { typ
   if (classification.type === "key_unavailable") {
     return (
       "MGG 密钥不可用：该文件是 MusicEx 加密容器，本应用不会读取账号或设备密钥。" +
-      "请在你有权使用的音乐客户端中导出 WAV、FLAC 或 MP3 后重新选择。"
+      "可使用项目内独立的 macOS 本机转换器生成 OGG 后重新选择，" +
+      "或在你有权使用的音乐客户端中导出 WAV、FLAC 或 MP3。"
     );
   }
   return "该 MGG 文件包含不支持的加密音频。请从授权客户端导出 WAV、FLAC 或 MP3 后重新选择。";

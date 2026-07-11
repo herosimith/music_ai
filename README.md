@@ -57,6 +57,12 @@ stream with an MGG extension is normalized locally and accepted. MusicEx/QTag/ST
 containers are rejected before storage with export guidance; the application never extracts
 account or device keys.
 
+For authorized MusicEx files on macOS, an optional independently built GPL-3.0-only companion is
+available under `companions/mgg-helper`. It reads the local QQ Music session and performs conversion
+on the user's Mac; it is never linked into or run by the Web/server applications. Build and usage,
+including the required explicit authorized-use confirmation, are documented in the companion
+README. The validated Ogg is then selected through the ordinary audio picker.
+
 The control plane can call an OpenAI-compatible Responses API for constrained, schema-validated
 coaching over immutable `ScoreV1` evidence. Configure `MUSIC_AI_COACH_BASE_URL`,
 `MUSIC_AI_COACH_MODEL`, and `MUSIC_AI_COACH_API_KEY` together; without them the deterministic rule
