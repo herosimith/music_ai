@@ -57,6 +57,7 @@ from music_ai_control_plane.security import (
 from music_ai_control_plane.service import (
     ControlPlaneService,
     DomainError,
+    InvalidRequestError,
     NotFoundError,
 )
 from music_ai_control_plane.storage import LocalObjectStore, ObjectStore
@@ -380,7 +381,7 @@ def _install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def handle_domain_error(request: Request, error: DomainError) -> JSONResponse:
         status_code = 404 if isinstance(error, NotFoundError) else 409
-        if error.code == "invalid_request":
+        if isinstance(error, InvalidRequestError):
             status_code = 422
         return _error_response(status_code, error.code, str(error))
 

@@ -13,6 +13,10 @@ from sqlalchemy.orm import Session
 
 from music_ai_control_plane.config import Settings
 from music_ai_control_plane.database import utc_now
+from music_ai_control_plane.media_intake import (
+    EncryptedAudioKind,
+    detect_unsupported_encrypted_audio,
+)
 from music_ai_control_plane.models import (
     AudioState,
     DeletionRequest,
@@ -45,6 +49,14 @@ class ConflictError(DomainError):
 
 class InvalidRequestError(DomainError):
     code = "invalid_request"
+
+
+class MggKeyUnavailableError(InvalidRequestError):
+    code = "mgg.key_unavailable"
+
+
+class MggEncryptedUnsupportedError(InvalidRequestError):
+    code = "mgg.encrypted_unsupported"
 
 
 class ControlPlaneService:
@@ -97,6 +109,7 @@ class ControlPlaneService:
         extension = {
             "audio/flac": "flac",
             "audio/mpeg": "mp3",
+            "audio/ogg": "ogg",
             "audio/wav": "wav",
         }[request.source_media_type]
         song.source_object_key = (
@@ -122,6 +135,15 @@ class ControlPlaneService:
             expected_length=song.source_byte_length,
             expected_sha256=song.source_sha256,
         )
+        encrypted_kind = detect_unsupported_encrypted_audio(payload)
+        if encrypted_kind == EncryptedAudioKind.MUSICEX:
+            raise MggKeyUnavailableError(
+                "MusicEx encrypted audio requires an authorized client export"
+            )
+        if encrypted_kind == EncryptedAudioKind.QMC_LEGACY:
+            raise MggEncryptedUnsupportedError(
+                "legacy encrypted MGG audio requires an authorized client export"
+            )
         if song.source_object_key is None:
             raise InvalidRequestError("song source storage key is missing")
         if song.state == SongState.UPLOADED and self.object_store.exists(song.source_object_key):

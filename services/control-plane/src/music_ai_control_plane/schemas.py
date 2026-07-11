@@ -25,7 +25,7 @@ class SongCreate(ApiModel):
     rights_basis: Annotated[str, StringConstraints(min_length=1, max_length=500)]
     source_sha256: Sha256
     source_byte_length: int = Field(gt=0, le=100_000_000)
-    source_media_type: Literal["audio/flac", "audio/mpeg", "audio/wav"]
+    source_media_type: Literal["audio/flac", "audio/mpeg", "audio/ogg", "audio/wav"]
 
 
 class SongView(ApiModel):

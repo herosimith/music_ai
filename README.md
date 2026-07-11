@@ -48,10 +48,19 @@ Start the browser practice workbench with:
 pnpm --filter @music-ai/web dev
 ```
 
-The first screen supports local audio files, a synthetic demo, waveform range selection,
+The first screen supports local audio files, including locally classified `.mgg` inputs, a
+synthetic demo, waveform range selection,
 AudioWorklet microphone capture, Pitchy-based preview corrections, session history, and
 WAV/transport downloads. Browser results are explicitly a local preview; authoritative
-server scoring remains confidence-gated by the model registry and scoring service.
+server scoring remains confidence-gated by the model registry and scoring service. A genuine Ogg
+stream with an MGG extension is normalized locally and accepted. MusicEx/QTag/STag encrypted
+containers are rejected before storage with export guidance; the application never extracts
+account or device keys.
+
+The control plane can call an OpenAI-compatible Responses API for constrained, schema-validated
+coaching over immutable `ScoreV1` evidence. Configure `MUSIC_AI_COACH_BASE_URL`,
+`MUSIC_AI_COACH_MODEL`, and `MUSIC_AI_COACH_API_KEY` together; without them the deterministic rule
+provider remains active.
 
 Production container manifests are documented in `docs/deployment.md`. They deploy the Web,
 control-plane, PostgreSQL, retention maintenance, and HTTPS gateway; model-backed workers remain

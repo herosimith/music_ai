@@ -376,6 +376,74 @@ def test_uploads_enforce_server_metadata_hash_length_type_and_unknown_fields(
     assert response.status_code == 422
 
 
+def test_plain_ogg_song_source_is_accepted(harness: Harness) -> None:
+    payload = b"OggS" + b"\x00" * 128
+    digest = hashlib.sha256(payload).hexdigest()
+    response = harness.client.post(
+        "/v1/songs",
+        headers=harness.headers(),
+        json={
+            "display_name": "Plain Ogg source",
+            "rights_basis": "Synthetic test fixture",
+            "source_sha256": digest,
+            "source_byte_length": len(payload),
+            "source_media_type": "audio/ogg",
+        },
+    )
+    assert response.status_code == 200
+
+    response = harness.client.put(
+        f"/v1/songs/{response.json()['id']}/content",
+        headers={**harness.headers(), "Content-Type": "audio/ogg"},
+        content=payload,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["state"] == "uploaded"
+    assert next(iter(harness.store.objects.values())) == payload
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected_code"),
+    [
+        (b"OggS" + b"\x00" * 256 + b"musicex\x00", "mgg.key_unavailable"),
+        (b"\x01\x02" + b"\x00" * 256 + b"QTag", "mgg.encrypted_unsupported"),
+        (b"\x01\x02" + b"\x00" * 256 + b"STag", "mgg.encrypted_unsupported"),
+    ],
+)
+def test_encrypted_mgg_is_rejected_before_object_storage(
+    harness: Harness,
+    payload: bytes,
+    expected_code: str,
+) -> None:
+    digest = hashlib.sha256(payload).hexdigest()
+    response = harness.client.post(
+        "/v1/songs",
+        headers=harness.headers(),
+        json={
+            "display_name": "Encrypted MGG source",
+            "rights_basis": "Synthetic test fixture",
+            "source_sha256": digest,
+            "source_byte_length": len(payload),
+            "source_media_type": "audio/ogg",
+        },
+    )
+    assert response.status_code == 200
+    song_id = response.json()["id"]
+
+    response = harness.client.put(
+        f"/v1/songs/{song_id}/content",
+        headers={**harness.headers(), "Content-Type": "audio/ogg"},
+        content=payload,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == expected_code
+    assert harness.store.objects == {}
+    song = harness.client.get(f"/v1/songs/{song_id}", headers=harness.headers())
+    assert song.json()["state"] == "pending_upload"
+
+
 def test_raw_audio_ttl_removes_object_but_preserves_derived_score(harness: Harness) -> None:
     song_id, _, manifest_id = create_ready_song(harness)
     session_id, phrase_id, score, idempotency_key = create_phrase_and_score(

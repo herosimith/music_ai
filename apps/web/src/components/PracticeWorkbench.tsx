@@ -46,6 +46,12 @@ import {
 } from "@/lib/audio";
 import { MicrophoneCapture } from "@/lib/capture";
 import {
+  classifyMgg,
+  isMggFilename,
+  mggIssueMessage,
+  normalizePlainMgg,
+} from "@/lib/mgg";
+import {
   capturePlaybackAnchor,
   captureStartSampleIndex,
   TransportRecorder,
@@ -210,16 +216,34 @@ export function PracticeWorkbench() {
   }, [setSongBlob]);
 
   const onFileSelected = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
+    async (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       event.target.value = "";
       if (!file) return;
-      if (!file.type.startsWith("audio/")) {
-        setErrorMessage("请选择浏览器支持的音频文件。");
-        return;
-      }
       if (file.size > MAX_FILE_BYTES) {
         setErrorMessage("音频文件不能超过 100 MB。");
+        return;
+      }
+      if (isMggFilename(file.name)) {
+        try {
+          const classification = await classifyMgg(file);
+          if (classification.type !== "plain_ogg") {
+            setErrorMessage(mggIssueMessage(classification));
+            return;
+          }
+          const normalized = normalizePlainMgg(file);
+          setSongBlob(normalized, normalized.name);
+          setRightsAccepted(false);
+          return;
+        } catch {
+          setErrorMessage(
+            "无法识别该 MGG 文件。请从授权客户端导出 WAV、FLAC 或 MP3 后重新选择。",
+          );
+          return;
+        }
+      }
+      if (!file.type.startsWith("audio/")) {
+        setErrorMessage("请选择浏览器支持的音频文件。");
         return;
       }
       setSongBlob(file, file.name);
@@ -512,7 +536,7 @@ export function PracticeWorkbench() {
                   <span>
                     {song
                       ? `${formatTime(duration)} · ${song.isDemo ? "合成示例" : "本地文件"}`
-                      : "支持 WAV、MP3、M4A、FLAC"}
+                      : "支持 WAV、MP3、M4A、FLAC、MGG"}
                   </span>
                 </div>
               </div>
@@ -520,10 +544,10 @@ export function PracticeWorkbench() {
                 <input
                   ref={fileInput}
                   type="file"
-                  accept="audio/*"
+                  accept="audio/*,.mgg,.mgg0,.mgg1,.mggl"
                   hidden
                   disabled={sourceLocked}
-                  onChange={onFileSelected}
+                  onChange={(event) => void onFileSelected(event)}
                 />
                 <button className="button secondary" disabled={sourceLocked} onClick={loadDemo}>
                   <WandSparkles size={17} />
